@@ -10,7 +10,7 @@ from constructs import Construct
 
 class EksStack(Stack):
     dast_deployment_path = "eks_manifests/dast_deployment.yaml"
-    dast_service_path = "eks_manifests/dast_deployment.yaml"
+    dast_service_path = "eks_manifests/dast_service.yaml"
 
     def __init__(self, scope: Construct, id: str, vpc: ec2.Vpc, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
