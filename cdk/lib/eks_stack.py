@@ -12,6 +12,7 @@ from constructs import Construct
 from config import IAM_ROLE_ARN
 
 
+
 class EksStack(Stack):
     dast_deployment_path = "eks_manifests/dast_deployment.yaml"
     dast_service_path = "eks_manifests/dast_service.yaml"
