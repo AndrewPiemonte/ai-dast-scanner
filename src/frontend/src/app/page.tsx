@@ -1,10 +1,15 @@
-import Image from "next/image";
+'use client';
 import styles from "./page.module.css";
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { useRouter } from "next/navigation";
 
 
 export default function Home() {
+  const router = useRouter()
+  const gotoRetirevePage = () => {
+    router.push("/retrieve")
+  }
   return (
     <div className={styles.background}>
       <div className={styles.page}>
@@ -24,7 +29,7 @@ export default function Home() {
                 </div>
                 <Separator orientation="vertical" />
                 <div>
-                  <Button variant="secondary">
+                  <Button variant="secondary" onClick={gotoRetirevePage}>
                     Retrive the test Results
                   </Button>
                 </div>
