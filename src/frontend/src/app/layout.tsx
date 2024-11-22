@@ -27,8 +27,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <h1>This is the layout of all pages</h1>
-        <br></br>
+        {/* <h1>This is the layout of all pages</h1> */}
+
         {children}
       </body>
     </html>
