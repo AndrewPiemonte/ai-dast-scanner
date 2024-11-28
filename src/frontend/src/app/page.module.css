@@ -16,6 +16,8 @@
   font-family: var(--font-geist-sans);
 }
 
+
+
 .background {
   background-image: url('./images/image1.png');
   background-size: cover; /* Ensures the image covers the whole container */
@@ -27,6 +29,24 @@
 
 .background2 {
   background-image: url("./images/image2.jpg");
+  background-size: cover; /* Ensures the image covers the whole container */
+  background-position: center; /* Centers the image */
+  background-repeat: no-repeat; /* Prevents the image from repeating */
+  height: 100vh; /* Full viewport height */
+  width: 100%; /* Full width */
+}
+
+.background3 {
+  background-image: url("./images/image3.png");
+  background-size: cover; /* Ensures the image covers the whole container */
+  background-position: center; /* Centers the image */
+  background-repeat: no-repeat; /* Prevents the image from repeating */
+  height: 100vh; /* Full viewport height */
+  width: 100%; /* Full width */
+}
+
+.background4 {
+  background-image: url("./images/image4.jpg");
   background-size: cover; /* Ensures the image covers the whole container */
   background-position: center; /* Centers the image */
   background-repeat: no-repeat; /* Prevents the image from repeating */

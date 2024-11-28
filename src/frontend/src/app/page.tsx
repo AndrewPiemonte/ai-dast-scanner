@@ -10,6 +10,9 @@ export default function Home() {
   const gotoRetirevePage = () => {
     router.push("/retrieve")
   }
+  const goToNewTest = () => {
+    router.push("/newTest")
+  }
   return (
     <div className={styles.background}>
       <div className={styles.page}>
@@ -22,7 +25,7 @@ export default function Home() {
             <div className="flex items-center justify-center">
               <div className="flex h-5 items-center space-x-4 text-sm">
                 <div>
-                  <Button variant="secondary">
+                  <Button variant="secondary" onClick={goToNewTest}>
                    
                     Make a new test using the tool
                   </Button>

@@ -1,0 +1,160 @@
+'use client';
+import { BorderBeam } from "@/components/ui/border-beam";
+import styles from "../page.module.css";
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@radix-ui/react-label";
+import { Input } from "@/components/ui/input";
+import Meteors from "@/components/ui/meteors";
+import { resData } from "./data"
+import ReactJson from "react-json-view";
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import jsPDF from "jspdf";
+import ShinyButton from "@/components/ui/shiny-button";
+import PulsatingButton from "@/components/ui/pulsating-button";
+
+export default function Home() {
+
+    const [url, setURL] = useState('');
+    const [fetched, setFetch] = useState(true);
+    let response = "";
+    const baseURL = "http://a100ec02480884106b8473da57ecc2e0-785405724.us-west-2.elb.amazonaws.com/zap/basescan";
+
+    const downloadPdf = () => {
+        const doc = new jsPDF();
+
+        // const jsonData = JSON.stringify(resData);
+
+        // Title
+        doc.setFontSize(12);
+        // doc.text("JSON Data", 10, 10);
+        let result = JSON.stringify(resData);
+        // doc.text(result, 10, 10);
+
+        // Add JSON data to the PDF
+        const data = Object.entries(resData).map(([key, value]) => `${key}: ${value}`);
+        data.forEach((line, index) => {
+            // console.log(JSON.stringify(line, null, 2));
+            // doc.text(line, 10, 20 + index * 10); // Adjust line spacing
+
+        });
+
+        // Save the PDF
+        doc.save("data.pdf");
+    };
+
+    // const saveData = (doc, line) => {
+    //     let obj = JSON.stringify(line);
+    //     if(obj)
+    // }
+
+
+
+    useEffect(() => {
+
+        const helperFunction = async (value: string) => {
+
+
+            const params = new URLSearchParams({
+                'target_url': value
+            });
+            console.log(params);
+            const fetchURL = baseURL + '?' + params;
+            console.log(fetchURL);
+
+            const res = await fetch(`${baseURL}?${params}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            console.log(res);
+
+            response = await res.json();
+            console.log(response);
+
+
+            setFetch(true);
+
+        }
+        // Retrieve data from the browser's history state
+        const value = sessionStorage.getItem('url');
+        console.log(value); // Outputs: 'value'
+
+        if (value && !fetched) {
+            setURL(value);
+            //   sessionStorage.removeItem('url');
+            helperFunction(value);
+
+
+
+
+        }
+
+    }, []);
+
+    return (
+        <div className={styles.background2}>
+
+            <div className={styles.page}>
+                <main className={styles.main}>
+
+
+                    {fetched ?
+
+                        <>
+                            <div className="relative flex h-[500px] w-[1000px] flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
+                                <h2> Results have been received</h2>
+                                <ScrollArea className="h-500px w-1000px rounded-md border">
+
+
+                                    <ReactJson src={resData} theme="monokai" />
+
+                                </ScrollArea>
+                            </div>
+
+                            <PulsatingButton onClick={downloadPdf}>Download the PDF report</PulsatingButton>
+
+
+
+                        </>
+
+
+                        :
+
+
+                        <>
+                            <div className="relative flex h-[350px] w-[500px] flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
+
+                                <span className="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-black to-gray-300/80 bg-clip-text text-center text-6xl font-semibold leading-none text-transparent dark:from-white dark:to-slate-900/10">
+                                    Fetching
+                                </span>
+                                <BorderBeam size={250} duration={12} delay={9} />
+                                <Meteors number={100} />
+
+                            </div>
+
+
+                        </>
+
+                    }
+
+
+
+
+
+
+
+
+
+                </main>
+
+            </div>
+        </div >
+    );
+}
