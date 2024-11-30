@@ -21,11 +21,58 @@ export default function Home() {
 
     const [url, setURL] = useState('');
     const [fetched, setFetch] = useState(true);
-    let response = "";
-    const baseURL = "http://a100ec02480884106b8473da57ecc2e0-785405724.us-west-2.elb.amazonaws.com/zap/basescan";
+    let response : object = {};
+    const baseURL = "http://a28a61c6c48bb417897f06ced9d58895-167885905.us-west-2.elb.amazonaws.com/zap/basescan";
+
+    let lineNumber = 10;
+    let pageHeight = 0;
+
+    const printPDF = (doc: jsPDF, obj : object) => {
+        for(let key in obj) {
+            if(typeof(obj[key]) === "string") {
+                // console.log(obj[key]);
+
+                if(lineNumber + 10  > pageHeight - 10) {
+                    doc.addPage();
+                    lineNumber = 10;
+                }
+
+                const result = `${key} : ${obj[key]}`;
+                doc.text(result, 10, lineNumber);
+                lineNumber = lineNumber + 10;
+
+            } else if (Array.isArray(obj[key])) {
+                if(lineNumber + 10  > pageHeight - 10) {
+                    doc.addPage();
+                    lineNumber = 10;
+                }
+
+                const result = `${key} :  is of type Array with index described below`;
+                doc.text(result, 10, lineNumber);
+                lineNumber = lineNumber + 10;
+
+                printPDF(doc, obj[key]);
+
+            } else {
+                if(lineNumber + 10  > pageHeight - 10) {
+                    doc.addPage();
+                    lineNumber = 10;
+                }
+
+                const result = `${key} : is of type object described below `;
+                doc.text(result, 10, lineNumber);
+                lineNumber = lineNumber + 10;
+
+                printPDF(doc, obj[key]);
+            }
+        }
+        
+
+    }
 
     const downloadPdf = () => {
         const doc = new jsPDF();
+        pageHeight = doc.internal.pageSize.height;
 
         // const jsonData = JSON.stringify(resData);
 
@@ -33,18 +80,21 @@ export default function Home() {
         doc.setFontSize(12);
         // doc.text("JSON Data", 10, 10);
         let result = JSON.stringify(resData);
-        // doc.text(result, 10, 10);
+        // doc.text(result, 10, 10, {maxWidth: 180});
 
-        // Add JSON data to the PDF
-        const data = Object.entries(resData).map(([key, value]) => `${key}: ${value}`);
-        data.forEach((line, index) => {
-            // console.log(JSON.stringify(line, null, 2));
-            // doc.text(line, 10, 20 + index * 10); // Adjust line spacing
+        printPDF(doc, resData);
 
-        });
+
+        const pdfBlob = doc.output("blob");
+
+        // Create a URL for the Blob
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+      
+        // Open the PDF in a new tab
+        window.open(pdfUrl, "_blank");
 
         // Save the PDF
-        doc.save("data.pdf");
+        // doc.save("data.pdf");
     };
 
     // const saveData = (doc, line) => {
