@@ -20,8 +20,8 @@ import PulsatingButton from "@/components/ui/pulsating-button";
 export default function Home() {
 
     const [url, setURL] = useState('');
-    const [fetched, setFetch] = useState(true);
-    let response : object = {};
+    const [fetched, setFetch] = useState(false);
+    const [response, setResponse] = useState({});
     const baseURL = "http://a28a61c6c48bb417897f06ced9d58895-167885905.us-west-2.elb.amazonaws.com/zap/basescan";
 
     let lineNumber = 10;
@@ -38,8 +38,10 @@ export default function Home() {
                 }
 
                 const result = `${key} : ${obj[key]}`;
-                doc.text(result, 10, lineNumber);
-                lineNumber = lineNumber + 10;
+                var dim = doc.getTextDimensions(result, {maxWidth : 180});
+                doc.text(result, 10, lineNumber, {maxWidth: 180});
+
+                lineNumber = lineNumber + dim.h;
 
             } else if (Array.isArray(obj[key])) {
                 if(lineNumber + 10  > pageHeight - 10) {
@@ -78,11 +80,8 @@ export default function Home() {
 
         // Title
         doc.setFontSize(12);
-        // doc.text("JSON Data", 10, 10);
-        let result = JSON.stringify(resData);
-        // doc.text(result, 10, 10, {maxWidth: 180});
 
-        printPDF(doc, resData);
+        printPDF(doc, response);
 
 
         const pdfBlob = doc.output("blob");
@@ -125,7 +124,7 @@ export default function Home() {
 
             console.log(res);
 
-            response = await res.json();
+            setResponse(await res.json());
             console.log(response);
 
 
@@ -163,7 +162,7 @@ export default function Home() {
                                 <ScrollArea className="h-500px w-1000px rounded-md border">
 
 
-                                    <ReactJson src={resData} theme="monokai" />
+                                    <ReactJson src={response} theme="monokai" />
 
                                 </ScrollArea>
                             </div>
