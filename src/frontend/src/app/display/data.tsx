@@ -3,7 +3,7 @@ export let resData = {
     "scan_results": {
         "@programName": "ZAP",
         "@version": "2.15.0",
-        "@generated": "Sun, 1 Dec 2024 05:55:51",
+        "@generated": "Thurs, 5 Dec 2024 05:55:51",
         "site": [
             {
                 "@name": "https://www.harvard.com",

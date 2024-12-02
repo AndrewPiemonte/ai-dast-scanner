@@ -108,27 +108,34 @@ export default function Home() {
         const helperFunction = async (value: string) => {
 
 
-            const params = new URLSearchParams({
-                'target_url': value
-            });
-            console.log(params);
-            const fetchURL = baseURL + '?' + params;
-            console.log(fetchURL);
+            // const params = new URLSearchParams({
+            //     'target_url': value
+            // });
+            // console.log(params);
+            // const fetchURL = baseURL + '?' + params;
+            // console.log(fetchURL);
 
-            const res = await fetch(`${baseURL}?${params}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
+            // const res = await fetch(`${baseURL}?${params}`, {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     }
+            // });
 
-            console.log(res);
+            // console.log(res);
 
-            setResponse(await res.json());
-            console.log(response);
+            // setResponse(await res.json());
+            // console.log(response);
 
 
-            setFetch(true);
+            // setFetch(true);
+
+            
+
+            setTimeout(() => {
+                setResponse(resData);
+                setFetch(true);
+            }, 10000);
 
         }
         // Retrieve data from the browser's history state
