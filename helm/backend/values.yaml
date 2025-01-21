@@ -15,7 +15,7 @@ service:
 zapBaseUrl: "http://zap-service:8080"
 
 s3:
-  bucketName: "s3stack-aestbucket11161ed0-5fzi3unignxa"
+  bucketName: "s3stack-aestbucket11161ed0-oyzazupebp7h"
   accessKey: ""
 
 serviceAccount:
