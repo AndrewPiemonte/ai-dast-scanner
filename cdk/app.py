@@ -10,7 +10,7 @@ app = App()
 
 vpc_stack = AestVpcStack(app, "AestVpcStack")
 s3_stack = S3Stack(app, "S3Stack", vpc=vpc_stack.vpc)
-llm_stack = LlmStack(app, "LlmStack")
+# llm_stack = LlmStack(app, "LlmStack")
 eks_stack = EksStack(app, "EksStack", 
     vpc=vpc_stack.vpc,
     bucket=s3_stack.bucket
@@ -22,9 +22,9 @@ CfnOutput(s3_stack, "BucketName",
     description="Name of the S3 bucket for ZAP reports"
 )
 
-CfnOutput(llm_stack, "LlmEndpointName",
-    value=llm_stack.endpoint.attr_endpoint_name,
-    description="Name of the SageMaker endpoint for LLM"
-)
+# CfnOutput(llm_stack, "LlmEndpointName",
+#     value=llm_stack.endpoint.attr_endpoint_name,
+#     description="Name of the SageMaker endpoint for LLM"
+# )
 
 app.synth()
