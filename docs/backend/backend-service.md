@@ -110,9 +110,9 @@ Example Response:
 }
 ```
 
-    - Response:
-        - Returns the parsed ZAP report as JSON if successful.
-        - Returns a 500 error if the scan job fails.
+- Response:
+  - Returns the parsed ZAP report as JSON if successful.
+  - Returns a 500 error if the scan job fails.
 
 Example Usage (cURL):
 
