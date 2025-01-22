@@ -76,7 +76,7 @@ This indicates the path to your Helm chart used to run the scan job.
 
 ## Endpoints
 
-GET /
+### GET /
     - Description: Basic health-check endpoint or greeting route.
     - Response: Returns a JSON object with a message.
 
@@ -86,19 +86,21 @@ curl http://localhost:8000/
 
 Example Response:
 
+```
 {
   "message": "Hello, world!"
 }
+```
 
-POST /zap/basescan
-    - Description:
-        - Triggers a new ZAP base scan job against the provided target_url.
-        - Validates the target URL.
-        - Generates a unique timestamp-based Job name.
-        - Installs a Helm release (which in turn creates a Kubernetes Job).
-        - Waits for the Job to register and complete.
-        - Reads the final report from the container’s file system.
-    - Request Body:
+### POST /zap/basescan
+- Description:
+    - Triggers a new ZAP base scan job against the provided target_url.
+    - Validates the target URL.
+    - Generates a unique timestamp-based Job name.
+    - Installs a Helm release (which in turn creates a Kubernetes Job).
+    - Waits for the Job to register and complete.
+    - Reads the final report from the container’s file system.
+- Request Body:
 
 ```
 {
