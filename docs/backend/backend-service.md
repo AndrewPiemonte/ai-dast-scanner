@@ -82,7 +82,9 @@ This indicates the path to your Helm chart used to run the scan job.
 
 Example Usage (cURL):
 
-curl http://localhost:8000/
+```
+curl http://<OUR EXTERNAL IP>/
+```
 
 Example Response:
 
@@ -115,7 +117,7 @@ Example Response:
 Example Usage (cURL):
 
 ```
-curl -X POST http://localhost:8000/zap/basescan \
+curl -X POST http://<OUR EXTERNAL IP>/zap/basescan \
      -H "Content-Type: application/json" \
      -d '{"target_url":"https://example.com"}'
 ```
