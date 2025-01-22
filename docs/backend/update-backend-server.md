@@ -44,6 +44,7 @@
 > You don't have to use 'kubectl' to interact with the Kubernetes. I'm using k9s.
 
 1. Get the external IP address for the backend service: `kubectl get svc backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'`
-
----
-
+2. (In my case) I simply curl the external IP address to test the backend server: 
+```
+curl -X POST "http://a6fce24b161c44922b8905516740476a-553792565.us-west-2.elb.amazonaws.com/zap/basescan?target_url=https://google.com"
+```
