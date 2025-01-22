@@ -12,11 +12,11 @@ This service allows you to:
 It uses FastAPI for the web service, asynchronous operations to handle long-running tasks, and AWS S3 (optional) for storing artifacts in the future.
 
 Technology Stack
-• FastAPI (Python) — A high-performance Python web framework.
-• Kubernetes Python Client — To interact with your K8s cluster (create Jobs, read statuses, etc.).
-• Helm — Used to install a custom chart that runs the ZAP scan job.
-• AWS Boto3 (optional) — Provided for future S3 integration (currently used for potential storage or logs).
-• Python Asyncio — Handles concurrency and enforces a timeout on long-running tasks.
+- FastAPI (Python) — A high-performance Python web framework.
+- Kubernetes Python Client — To interact with your K8s cluster (create Jobs, read statuses, etc.).
+- Helm — Used to install a custom chart that runs the ZAP scan job.
+- AWS Boto3 (optional) — Provided for future S3 integration (currently used for potential storage or logs).
+- Python Asyncio — Handles concurrency and enforces a timeout on long-running tasks.
 
 ## Code Structure
 
