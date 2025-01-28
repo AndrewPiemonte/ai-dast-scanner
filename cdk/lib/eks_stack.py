@@ -117,9 +117,20 @@ class EksStack(Stack):
             ]
         )
 
+        # Add Bedrock permissions
+        bedrock_policy = iam.PolicyStatement(
+            sid="BedrockFullAccess",
+            effect=iam.Effect.ALLOW,
+            actions=[
+                "bedrock:*"
+            ],
+            resources=["*"]
+        )
+
         backend_service_account.add_to_principal_policy(csi_policy)
         backend_service_account.add_to_principal_policy(object_policy)
         backend_service_account.add_to_principal_policy(sagemaker_policy)
+        backend_service_account.add_to_principal_policy(bedrock_policy)
 
         # Grant Kubernetes permissions for CSI driver and jobs
         job_permissions = eks.KubernetesManifest(
