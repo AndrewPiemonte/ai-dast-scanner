@@ -58,11 +58,26 @@ k8s_api = client.BatchV1Api()
 core_v1_api = client.CoreV1Api()
 s3_client = boto3.client("s3", region_name="us-west-2")
 
-# llm_service = LlmService()
+# Initialize Bedrock client
+bedrock_client = boto3.client("bedrock", region_name="us-west-2")  
 
 @app.get("/")
 async def root():
-    return {"message": "Hello, world!"}
+    return {"message": "Hello, world!BedRock"}
+
+@app.get("/bedrock/models")
+async def list_bedrock_models():
+    """
+    List available AWS Bedrock foundation models
+    """
+    try:
+        response = bedrock_client.list_foundation_models()
+        return {"models": response.get("models", [])}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error listing Bedrock models: {str(e)}"
+        )
 
 @app.post("/zap/basescan")
 async def zap_basescan(target_url: str):
