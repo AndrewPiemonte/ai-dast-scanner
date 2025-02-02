@@ -1,5 +1,3 @@
-import Link from "next/link"
-
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -19,7 +17,7 @@ export function NewTestCard() {
     const router = useRouter()
     const goToDislayPage = () => {
         sessionStorage.setItem('url', url);
-        router.push("/display");
+        router.push("/");
         
       }
 
