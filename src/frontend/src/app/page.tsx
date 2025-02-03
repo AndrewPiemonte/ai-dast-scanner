@@ -3,7 +3,11 @@ import styles from "./page.module.css";
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useRouter } from "next/navigation";
+import outputs from "@/../amplify_outputs.json";
+import { Amplify } from "aws-amplify";
+import "@aws-amplify/ui-react/styles.css";
 
+Amplify.configure(outputs);
 
 export default function Home() {
   const router = useRouter()
