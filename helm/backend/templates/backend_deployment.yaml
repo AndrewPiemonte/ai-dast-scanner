@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+      annotations:
+        eks.amazonaws.com/role-arn: "arn:aws:iam::619071345478:role/EksStack-BackendServiceAccountRole"
+    spec:
+      serviceAccountName: backend-sa
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      containers:
+      - name: backend
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        ports:
+        - containerPort: 8000
+        env:
+        - name: ZAP_REPORTS_PATH
+          value: "/reports"
+        - name: ZAP_BASE_URL
+          value: {{ .Values.zapBaseUrl }}
+        volumeMounts:
+        - name: zap-reports
+          mountPath: /reports
+          readOnly: false
+      volumes:
+      - name: zap-reports
+        persistentVolumeClaim:
+          claimName: zap-reports-pvc

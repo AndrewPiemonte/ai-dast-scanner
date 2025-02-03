@@ -1,0 +1,7 @@
+replicaCount: 1
+
+zap:
+  image:
+    repository: ghcr.io/zaproxy/zaproxy
+    tag: stable
+  port: 8080

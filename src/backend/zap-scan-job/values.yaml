@@ -1,0 +1,16 @@
+job:
+  name: zap-basescan-job
+  namespace: default
+  timestamp: ""  # This will be set dynamically by the backend server
+  image:
+    repository: ghcr.io/zaproxy/zaproxy
+    tag: stable
+  awsRegion: us-west-2
+  s3Bucket: s3stack-aestbucket11161ed0-oyzazupebp7h
+  scanTimeout: 3600  
+
+s3:
+  bucketName: "s3stack-aestbucket11161ed0-oyzazupebp7h"
+
+targetUrl: "https://example.com"
+zapScanJobEnabled: false
