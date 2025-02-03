@@ -4,6 +4,7 @@ import datetime
 import asyncio
 import boto3
 import json
+import bedrock_client
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -12,7 +13,6 @@ from starlette.responses import Response
 from kubernetes import client, config
 from config import settings
 from urllib.parse import urlparse
-# from llm_service import LlmService
 
 app = FastAPI()
 
@@ -58,26 +58,17 @@ k8s_api = client.BatchV1Api()
 core_v1_api = client.CoreV1Api()
 s3_client = boto3.client("s3", region_name="us-west-2")
 
-# Initialize Bedrock client
-bedrock_client = boto3.client("bedrock", region_name="us-west-2")  
-
 @app.get("/")
 async def root():
-    return {"message": "Hello, world!BedRock"}
+    return {"message": "Hello, world!!"}
 
 @app.get("/bedrock/models")
-async def list_bedrock_models():
-    """
-    List available AWS Bedrock foundation models
-    """
-    try:
-        response = bedrock_client.list_foundation_models()
-        return {"models": response.get("models", [])}
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error listing Bedrock models: {str(e)}"
-        )
+async def get_models():
+    return bedrock_client.list_bedrock_models()
+
+@app.post("/bedrock/invoke")
+async def invoke_model(input_text: str, model_id: str = "anthropic.claude-v2"):
+    return bedrock_client.invoke_bedrock_model(input_text, model_id)
 
 @app.post("/zap/basescan")
 async def zap_basescan(target_url: str):
