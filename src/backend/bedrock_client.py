@@ -1,7 +1,11 @@
 import boto3
 import json
 import time
+import datetime
 from fastapi import HTTPException
+from botocore.exceptions import ClientError
+from fastapi import HTTPException
+from config import settings
 
 # Initialize Bedrock clients
 bedrock_client = boto3.client("bedrock", region_name="us-west-2")
@@ -14,54 +18,71 @@ def list_bedrock_models():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing Bedrock models: {str(e)}")
 
-def invoke_bedrock_model(input_text: str, model_id: str = "anthropic.claude-v2"):
-    """Invoke a Bedrock model with the given input text"""
+
+def invoke_bedrock_model(input_text: str):
+    """Invoke the Amazon Titan Text Express model with the given input text."""
     try:
+        # Prepare the request payload
         body = json.dumps({
-            "prompt": f"\n\nHuman: {input_text}\n\nAssistant:",
-            "max_tokens_to_sample": 300,
-            "temperature": 0.1,
-            "top_p": 0.9,
+            "inputText": f"Summarize the following security report:\n\n{input_text}",
+            "textGenerationConfig": {
+                "maxTokenCount": 500,  
+                "stopSequences": [],
+                "temperature": 0.7,
+                "topP": 0.9
+            }
         })
 
+        # Invoke the model
         response = bedrock_runtime_client.invoke_model(
-            modelId=model_id,
+            modelId=settings.BASE_MODEL_ID,
             contentType="application/json",
             accept="application/json",
             body=body
         )
 
+        # Parse the response
         response_body = json.loads(response["body"].read())
-        return {"response": response_body.get("completion")}
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error invoking Bedrock model: {str(e)}")
 
-        
-def fine_tune_bedrock_model(
-    base_model_id: str, 
-    s3_train_data: str, 
-    s3_output_data: str, 
-    job_name: str, 
-    model_name: str, 
-    role_arn: str
-    ):
+        # Extract and return the generated text
+        if 'results' in response_body and len(response_body['results']) > 0:
+            return response_body['results'][0].get('outputText', 'No response generated.')
+        else:
+            return 'No response generated.'
+
+    except ClientError as err:
+        raise Exception(f"Error invoking Bedrock model: {err.response['Error']['Message']}")
+    except Exception as e:
+        raise Exception(f"Unexpected error: {str(e)}")
+
+
+def fine_tune_bedrock_model():
     """
     Fine-tune a Bedrock foundation model and return the new custom model_id.
+    Uses configuration and AWS services to initialize parameters.
 
-    :param base_model_id: ID of the base model to fine-tune.
-    :param s3_train_data: S3 URI where the training data is stored.
-    :param s3_output_data: S3 URI where output data should be stored.
-    :param job_name: Unique name for the fine-tuning job.
-    :param model_name: Custom name for the fine-tuned model.
-    :param role_arn: IAM role ARN with permissions for S3 and Bedrock.
     :return: jobIdentifier to track the fine-tuning status.
     """
     try:
+        # Generate a unique job name using the current timestamp
+        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+        job_name = f"fine-tune-job-{timestamp}"
+
+        # Use the URIs directly from settings
+        s3_train_data = settings.S3_TRAIN_DATA_URI
+        s3_output_data = f"{settings.S3_OUTPUT_DATA_URI}{job_name}"
+
+        # Base model ID from settings
+        base_model_id = settings.BASE_MODEL_ID
+
+        # IAM role ARN from settings
+        role_arn = settings.AWS_ROLE_ARN
+
+        # Call the fine-tuning function from bedrock_client
         response = bedrock_client.create_model_customization_job(
             customizationType="FINE_TUNING",
             jobName=job_name,
-            customModelName=model_name,
+            customModelName=f"custom-model-{timestamp}",
             roleArn=role_arn,
             baseModelIdentifier=base_model_id,
             hyperParameters={
@@ -75,8 +96,10 @@ def fine_tune_bedrock_model(
 
         return {"jobIdentifier": response}
 
+    except ClientError as err:
+        raise HTTPException(status_code=500, detail=f"Error starting fine-tuning: {err.response['Error']['Message']}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error starting fine-tuning: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
 def get_fine_tuned_model_id(job_identifier: str):

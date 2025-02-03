@@ -60,15 +60,15 @@ s3_client = boto3.client("s3", region_name="us-west-2")
 
 @app.get("/")
 async def root():
-    return {"message": "Hello, world!!"}
+    return {"message": "Hello, world!!5"}
 
-@app.get("/bedrock/models")
-async def get_models():
-    return bedrock_client.list_bedrock_models()
+@app.get("/bedrock/fine-tune")
+async def fine_tune_model():
+    return bedrock_client.fine_tune_bedrock_model()
 
 @app.post("/bedrock/invoke")
-async def invoke_model(input_text: str, model_id: str = "anthropic.claude-v2"):
-    return bedrock_client.invoke_bedrock_model(input_text, model_id)
+async def invoke_model(input_text: str):
+    return bedrock_client.invoke_bedrock_model(input_text)
 
 @app.post("/zap/basescan")
 async def zap_basescan(target_url: str):
