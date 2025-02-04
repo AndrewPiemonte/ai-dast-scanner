@@ -30,7 +30,6 @@ export default function Home() {
               <div className="flex h-5 items-center space-x-4 text-sm">
                 <div>
                   <Button variant="secondary" onClick={goToNewTest}>
-                   
                     Make a new test using the tool
                   </Button>
                 </div>
