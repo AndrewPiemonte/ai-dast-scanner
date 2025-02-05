@@ -4,3 +4,7 @@
 
 config.py
 
+venv/
+pyvenv.cfg
+cdk/source/Lib
+cdk/Scripts
