@@ -151,7 +151,7 @@ helm install prometheus prometheus-community/kube-prometheus-stack
 
 2. Grafana Port Forward
 ```
-kubectl port-forward svc/prometheus-grafana 3000:80
+kubectl port-forward svc/<OUR TBD SVC NAME> 3000:80
 ```
 Open http://localhost:3000 to visualize CPU, memory, and custom Locust metrics if you scrape :8000 from your load generator.
 
