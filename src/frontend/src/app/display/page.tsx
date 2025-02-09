@@ -1,50 +1,158 @@
 'use client';
 import { BorderBeam } from "@/components/ui/border-beam";
-import styles from "@/page.module.css";
-import { useEffect, useState } from "react";
+import styles from "./../page.module.css";
+import { use, useEffect, useState } from "react";
 import Meteors from "@/components/ui/meteors";
 import {JSONTree} from "react-json-tree";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import jsPDF from "jspdf";
-import ShinyButton from "@/components/ui/shiny-button";
 import PulsatingButton from "@/components/ui/pulsating-button";
+import { uploadData } from "@aws-amplify/storage";
+import { useAuthenticator } from "@aws-amplify/ui-react";
+import jsPDF from "jspdf";
+import { generateClient } from 'aws-amplify/data';
+import type { Schema } from '../../../amplify/data/resource'; // Path to your backend resource definition
+
+
+
+
 
 export default function Home() {
+    let { user } = useAuthenticator()
+    console.log('home called')
+    const client = generateClient<Schema>();
+    const [called, setCalled] = useState(false);
+    const [fetched, setFetch] = useState(false);
+    const [jsonData, setJsonData] = useState<Record<string, any> | null>(null);
+    let pageHeight = 0;
+    let lineNumber = 10;
 
-    const [url, setURL] = useState('');
-    const [fetched, setFetch] = useState(true);
-    let response = "";
-    const baseURL = "http://a36abb63983b6472483debf966e2cafd-698803526.us-west-2.elb.amazonaws.com/zap/basescan";
+    const printPDF = (doc: jsPDF, obj:Record<string, any>) => {
+        for (let key in obj) {
+            if (typeof (obj[key]) === "string") {
+                // console.log(obj[key]);
+
+                if (lineNumber + 10 > pageHeight - 10) {
+                    doc.addPage();
+                    lineNumber = 10;
+                }
+
+                const result = `${key} : ${obj[key]}`;
+                var dim = doc.getTextDimensions(result, { maxWidth: 180 });
+                doc.text(result, 10, lineNumber, { maxWidth: 180 });
+
+                lineNumber = lineNumber + dim.h;
+
+            } else if (Array.isArray(obj[key])) {
+                if (lineNumber + 10 > pageHeight - 10) {
+                    doc.addPage();
+                    lineNumber = 10;
+                }
+
+                const result = `${key} :  is of type Array with index described below`;
+                doc.text(result, 10, lineNumber);
+                lineNumber = lineNumber + 10;
+
+                printPDF(doc, obj[key]);
+
+            } else {
+                if (lineNumber + 10 > pageHeight - 10) {
+                    doc.addPage();
+                    lineNumber = 10;
+                }
+
+                const result = `${key} : is of type object described below `;
+                doc.text(result, 10, lineNumber);
+                lineNumber = lineNumber + 10;
+
+                printPDF(doc, obj[key]);
+            }
+        }
+
+
+    }
+
+
+    const downloadPdf = () => {
+        try{
+        const doc = new jsPDF();
+        pageHeight = doc.internal.pageSize.height;
+        doc.setFontSize(12);
+        
+        if (jsonData != null){
+            printPDF(doc, jsonData);
+        }
+
+        const pdfBlob = doc.output("blob");
+
+        // Create a URL for the Blob
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+
+        // Open the PDF in a new tab
+        window.open(pdfUrl, "_blank");
+
+
+        } catch(error){
+            console.log(error)
+        }
+        
+    };
+
 
     useEffect(() => {
 
-        const helperFunction = async (value: string) => {
-            const params = new URLSearchParams({
-                'target_url': value
-            });
-            console.log(params);
-            const fetchURL = baseURL + '?' + params;
-            console.log(fetchURL);
+        const getReport = async (value: string) => {
+            console.log('getReport Called')
 
-            const res = await fetch(`${baseURL}?${params}`, {
+            const res = await fetch(`/api/getReport`, {
                 method: 'POST',
-                headers: {
+                headers: { 
                     'Content-Type': 'application/json',
-                }
+                    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+                 },
+                body: JSON.stringify({value})
             });
-            console.log(res);
-            response = await res.json();
-            console.log(response);
+            let report = ""
+            try{
+                let response = await res.json();
+                console.log("got respose")
+                console.log(response);
+                setJsonData(response);
+                report = JSON.stringify(response)
+            }catch(error){
+                setJsonData({error: "an error occurred"})
+                console.log(error)
+            }
+
+            try{
+                console.log('uploading report')
+                const text = new Blob([JSON.stringify(report)], {type: 'text/plain'})
+                const userId = user.userId;
+                const key = `reports/${userId}/report1.txt`;
+                uploadData({
+                    path: ({ identityId }) => {
+                        return `reports/${identityId}/report1.txt`;
+                      },
+                    data: text
+                })
+            } catch(error){
+                console.log(error)
+            }
+            console.log('setting fetched to true')
             setFetch(true);
         }
+
         // Retrieve data from the browser's history state
         const value = sessionStorage.getItem('url');
         console.log(value); // Outputs: 'value'
 
-        if (value && !fetched) {
-            setURL(value);
-            helperFunction(value);
+        if (value && !called) {
+            console.log('getting report');
+            setCalled(true);
+            console.log(fetched);
+            getReport(value);
         }
+
+        
     }, []);
 
     return (
@@ -56,20 +164,20 @@ export default function Home() {
                             <div className="relative flex h-[500px] w-[1000px] flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
                                 <h2> Results have been received</h2>
                                 <ScrollArea className="h-500px w-1000px rounded-md border">
-                                    <JSONTree data={response} theme="monokai" />
+                                    <JSONTree data = {jsonData} shouldExpandNodeInitially={() => true} />
                                 </ScrollArea>
                             </div>
-                            <PulsatingButton>Download the PDF report</PulsatingButton>
+                            <PulsatingButton onClick={downloadPdf}>Download the PDF report</PulsatingButton>
                         </>
                         :
                         <>
-                            <div className="relative flex h-[350px] w-[500px] flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
-                                <span className="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-black to-gray-300/80 bg-clip-text text-center text-6xl font-semibold leading-none text-transparent dark:from-white dark:to-slate-900/10">
-                                    Fetching
+                               <div className="relative flex h-[350px] w-[500px] flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
+                                    <span className="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-black to-gray-300/80 bg-clip-text text-center text-6xl font-semibold leading-none text-transparent dark:from-white dark:to-slate-900/10">
+                                        Fetching
                                 </span>
                                 <BorderBeam size={250} duration={12} delay={9} />
                                 <Meteors number={100} />
-                            </div>
+                                </div>
                         </>
                     }
                 </main>

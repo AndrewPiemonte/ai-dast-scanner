@@ -3,11 +3,8 @@ import styles from "./page.module.css";
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useRouter } from "next/navigation";
-import outputs from "@/../amplify_outputs.json";
-import { Amplify } from "aws-amplify";
 import "@aws-amplify/ui-react/styles.css";
 
-Amplify.configure(outputs);
 
 export default function Home() {
   const router = useRouter()
@@ -29,13 +26,13 @@ export default function Home() {
             <div className="flex items-center justify-center">
               <div className="flex h-5 items-center space-x-4 text-sm">
                 <div>
-                  <Button variant="secondary" onClick={goToNewTest}>
-                    Make a new test using the tool
+                  <Button variant="secondary" className="text-lg" onClick={goToNewTest}>
+                    Make a New test Using the Tool
                   </Button>
                 </div>
                 <Separator orientation="vertical" />
                 <div>
-                  <Button variant="secondary" onClick={gotoRetirevePage}>
+                  <Button variant="secondary" className="text-lg" onClick={gotoRetirevePage}>
                     Retrive the test Results
                   </Button>
                 </div>

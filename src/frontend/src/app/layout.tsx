@@ -6,6 +6,13 @@ import "@/components/navBar";
 import { Authenticator, View, useTheme, Text, ThemeProvider,Label } from '@aws-amplify/ui-react'
 import '@aws-amplify/ui-react/styles.css'
 import { usePathname } from "next/navigation";
+import outputs from "@/../amplify_outputs.json";
+import { Amplify } from "aws-amplify";
+
+Amplify.configure(outputs, {
+  ssr: true 
+});
+
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -40,7 +47,7 @@ const components = {
           fontFamily="Roboto, sans-serif"
           color="white"
         >
-        Login and Get your Custom DAST Report
+        Login and Get your Customized DAST Report
         </Text>
       </View>
     );
@@ -96,7 +103,7 @@ export default function RootLayout({
           color: white !important; /* Force label color to white */
         }
       `}</style>
-      <ThemeProvider theme = {theme}>
+       <ThemeProvider theme = {theme}>
       <Authenticator className={styles.background5} components = {components}>
         {children} 
       </Authenticator>

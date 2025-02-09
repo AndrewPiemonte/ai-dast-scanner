@@ -13,8 +13,6 @@ export default function Home() {
             </h1>
             <br></br>
             <NewTestCard />
-        
-
           </div>
         </main>
 

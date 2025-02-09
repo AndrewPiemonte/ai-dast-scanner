@@ -18,7 +18,6 @@ export function NewTestCard() {
     const goToDislayPage = () => {
         sessionStorage.setItem('url', url);
         router.push("/display");
-        
       }
 
     return (
