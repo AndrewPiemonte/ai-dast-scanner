@@ -2,36 +2,39 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DataTable } from "./data-table";
-
-export type Test = {
-    id: string
-    testName: string
-    testDate: string
-    targetURL: string
-    type: "base scan" | "api"
-    status: "success" | "pending" | "failed" | "-"
-}
+import type { Schema } from "../../../amplify/data/resource";
 
 
-export const TestTable = ({data} : { data : Test[]}) => {
-    const [tableData, setTableData] = useState<Test[]>(data);
+export const TestTable = ({data, deleteItem} : { 
+    data : Array<Schema["reportInfo"]["type"]>;
+    deleteItem: (id: any) => Promise<void>;
+     } ) => {
+    const [tableData, setTableData] = useState<Array<Schema["reportInfo"]["type"]>>(data);
+    console.log(data)
+    console.log(tableData)
     console.log("testtable")
-    const deleteItem = (id: string) => {
-        console.log("deleteItem Invoked")
-        setTableData((prevTable) => prevTable.filter((test) => test.id !== id));
-    }
+
+    useEffect(()=>{
+        try{
+            setTableData(data)
+        }
+        catch(error){
+            console.log(error)
+        }
+    }, [data])
 
 
-    const columns: ColumnDef<Test>[] = [
+    const columns: ColumnDef<Schema["reportInfo"]["type"]>[] = [
         {
             accessorKey: "testName",
             header: "Test Name",
             cell: ({row}) =>{
                 const test = row.original;
+                 let path = `/chat/${test.id}`
                 return (
-                  <Link href="/" className="text-blue-500 hover:underline">
+                  <Link href={path} className="text-blue-500 hover:underline">
                     {test.testName}
                   </Link>
                 );
@@ -54,7 +57,7 @@ export const TestTable = ({data} : { data : Test[]}) => {
             header: "Status"
         },
         {
-            accessorKey: "actions",
+            id: "actions",
             header: "Actions",
             cell: ({ row }) => {
               const test = row.original;

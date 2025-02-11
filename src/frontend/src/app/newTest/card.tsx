@@ -14,9 +14,16 @@ import { useRouter } from "next/navigation"
 
 export function NewTestCard() {
     const [url, setUrl] = useState("");
+    const [testName, setTestName] = useState("");
     const router = useRouter()
     const goToDislayPage = () => {
         sessionStorage.setItem('url', url);
+        if (testName !== ""){
+            sessionStorage.setItem('testName', testName);
+        } else{
+            sessionStorage.setItem('testName', "My First Test");
+        }
+        
         router.push("/display");
       }
 
@@ -32,6 +39,13 @@ export function NewTestCard() {
             <CardContent>
                 <div className="grid gap-4">
                     <div className="grid gap-2">
+                    <Label>Test Name</Label>
+                        <Input
+                            placeholder="Enter your URL here"
+                            value={testName}
+                            onChange={(e) => { setTestName(e.target.value) }}
+                            required
+                        />
                         <Label>URL</Label>
                         <Input
                             placeholder="Enter your URL here"

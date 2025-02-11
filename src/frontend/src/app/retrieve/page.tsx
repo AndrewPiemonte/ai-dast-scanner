@@ -6,34 +6,54 @@ import { useAuthenticator } from "@aws-amplify/ui-react";
 import type { Schema } from "../../../amplify/data/resource";
 import { generateClient } from "aws-amplify/api";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Test, TestTable } from "./columns"
+import { TestTable } from "./columns"
 import { useRouter } from "next/navigation";
+import { remove } from 'aws-amplify/storage';
 
-function getTests(): Test[] {
-  return [
-    {
-      id: "",
-      testName: "My First Test",
-      testDate: "Feb 7",
-      targetURL: "https://example.com",
-      type: "base scan",
-      status: "success"
-    }
-  ]
-}
+
 
 
 export default function Home() {
-  const router = useRouter()
+  const client = generateClient<Schema>();
+  const router = useRouter();
+  const [reports, setReports] = useState<Array<Schema["reportInfo"]["type"]>>([]);
+  const { signOut } = useAuthenticator();
   const newTest = () => {
     router.push("/newTest")
   }
-  const { user, signOut } = useAuthenticator();
-  const [lam, setLam] = useState<string | null>("no response yet");
-  console.log("retrive page called");
-  const data = getTests();
 
-  console.log(user)
+  async function deleteReport(reportId: string){
+    try{
+      await console.log(reportId)
+      remove({
+        path: ({identityId}) => `reports/${identityId}/${reportId}.txt`
+      });
+      await client.models.reportInfo.delete({
+        id: reportId
+      });
+
+    }catch(error){
+      console.log(error)
+    }
+  }
+
+
+
+  function getTests(){
+    client.models.reportInfo.observeQuery().subscribe({
+      next: (data) => {
+        setReports([...data.items].sort((a, b) => 
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()))
+      }
+    });
+  }
+
+  useEffect(()=>{
+    getTests()
+  }, []);
+
+  console.log("retrive page called");
+
 
   return (
     <div className={styles.background4}>
@@ -54,7 +74,7 @@ export default function Home() {
             New Test
           </Button>  
           <ScrollArea className=" w-700px ">
-            <TestTable data={data} />
+            <TestTable data={reports} deleteItem={deleteReport} />
           </ScrollArea>
           </div>
         </div>

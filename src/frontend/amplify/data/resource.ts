@@ -1,23 +1,25 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend"
-import { getReport } from "../functions/get-report/resource"
 
 const schema = a.schema({
-getReport: a.query()
-.arguments({
-    target_url: a.string()
-})
-.returns(a.string())
-.handler(a.handler.function(getReport))
-.authorization((allow) => [allow.guest()]),
-
-reportInfo: a.model({
-    id: a.id(),
-    testName: a.string(),
-    testDate: a.string(),
-    targetURL: a.string(),
-    type: a.enum(["base scan", "api"]),
-    status: a.enum(["success", "pending", "failed", "-"])
-}).authorization(allow => [allow.owner()])
+    reportInfo: a.model({
+        id: a.id(),
+        testName: a.string(),
+        testDate: a.string(),
+        targetURL: a.string(),
+        type: a.enum(['basescan', "api"]),
+        status: a.enum(["success", "pending", "failed"])
+    }).authorization(allow => [allow.owner()]),
+    Chat: a.model({
+        id: a.id(),
+        messages: a.hasMany("Message", "chatId")
+    }).authorization(allow => [allow.owner()]),
+    Message: a.model({
+      id: a.id(),
+      chatId: a.id(),
+      chat: a.belongsTo("Chat", "chatId"),
+      content: a.string(),
+      sender: a.enum(["user", "bot"])
+    }).authorization(allow => [allow.owner()])
 })
 
 export type Schema = ClientSchema<typeof schema>
@@ -25,6 +27,6 @@ export type Schema = ClientSchema<typeof schema>
 export const data = defineData({
     schema,
     authorizationModes: {
-        defaultAuthorizationMode: "iam"
+        defaultAuthorizationMode: "userPool"
     }
 })

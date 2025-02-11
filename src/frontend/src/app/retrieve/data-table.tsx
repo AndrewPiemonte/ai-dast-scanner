@@ -25,12 +25,12 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
+  console.log("data is:", data)
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
   })
- 
   return (
     <div className="rounded-md border">
       <Table>
@@ -77,4 +77,6 @@ export function DataTable<TData, TValue>({
       </Table>
     </div>
   )
+ 
+
 }

@@ -7,7 +7,6 @@ import {JSONTree} from "react-json-tree";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import PulsatingButton from "@/components/ui/pulsating-button";
 import { uploadData } from "@aws-amplify/storage";
-import { useAuthenticator } from "@aws-amplify/ui-react";
 import jsPDF from "jspdf";
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource'; // Path to your backend resource definition
@@ -17,7 +16,6 @@ import type { Schema } from '../../../amplify/data/resource'; // Path to your ba
 
 
 export default function Home() {
-    let { user } = useAuthenticator()
     console.log('home called')
     const client = generateClient<Schema>();
     const [called, setCalled] = useState(false);
@@ -100,7 +98,7 @@ export default function Home() {
 
     useEffect(() => {
 
-        const getReport = async (value: string) => {
+        const getReport = async (testName: string, value: string) => {
             console.log('getReport Called')
 
             const res = await fetch(`/api/getReport`, {
@@ -116,6 +114,19 @@ export default function Home() {
                 let response = await res.json();
                 console.log("got respose")
                 console.log(response);
+
+                const responseAI = await fetch(`/api/getEnhancedReport`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+                     },
+                    body: JSON.stringify({response})
+                });
+
+                let summary = await responseAI.json()
+                console.log(summary)
+                response["ai_summary"] = summary.response
                 setJsonData(response);
                 report = JSON.stringify(response)
             }catch(error){
@@ -123,16 +134,29 @@ export default function Home() {
                 console.log(error)
             }
 
+          
+
+
             try{
+                console.log("adding test to dynamo db")
+                const today = new Date().toLocaleString();
+                console.log(today)
+                const test = await client.models.reportInfo.create({
+                    testName: testName,
+                    testDate: today,
+                    targetURL: value,
+                    type: "basescan",
+                    status: "success"
+                })
+
+                console.log(test)
+                let reportName = test?.data?.id
                 console.log('uploading report')
-                const text = new Blob([JSON.stringify(report)], {type: 'text/plain'})
-                const userId = user.userId;
-                const key = `reports/${userId}/report1.txt`;
                 uploadData({
                     path: ({ identityId }) => {
-                        return `reports/${identityId}/report1.txt`;
+                        return `reports/${identityId}/${reportName}.json`;
                       },
-                    data: text
+                    data: report
                 })
             } catch(error){
                 console.log(error)
@@ -143,13 +167,14 @@ export default function Home() {
 
         // Retrieve data from the browser's history state
         const value = sessionStorage.getItem('url');
+        const testName = sessionStorage.getItem('testName')
         console.log(value); // Outputs: 'value'
 
-        if (value && !called) {
+        if (value && testName && !called) {
             console.log('getting report');
             setCalled(true);
             console.log(fetched);
-            getReport(value);
+            getReport(testName, value);
         }
 
         
@@ -161,7 +186,7 @@ export default function Home() {
                 <main className={styles.main}>
                     {fetched ?
                         <>
-                            <div className="relative flex h-[500px] w-[1000px] flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
+                            <div className="flex h-[500px] w-[1000px] flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
                                 <h2> Results have been received</h2>
                                 <ScrollArea className="h-500px w-1000px rounded-md border">
                                     <JSONTree data = {jsonData} shouldExpandNodeInitially={() => true} />
