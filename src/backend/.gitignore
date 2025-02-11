@@ -2,3 +2,5 @@
 # config.py
 
 .venv
+run_scan.sh
+.gitignore

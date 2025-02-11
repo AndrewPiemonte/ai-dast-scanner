@@ -24,7 +24,7 @@ def invoke_bedrock_model(input_text: str):
     try:
         # Prepare the request payload
         body = json.dumps({
-            "inputText": f"Summarize the following security report:\n\n{input_text}",
+            "inputText": input_text,
             "textGenerationConfig": {
                 "maxTokenCount": 500,  
                 "stopSequences": [],

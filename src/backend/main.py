@@ -5,7 +5,7 @@ import asyncio
 import boto3
 import json
 import bedrock_client
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -66,9 +66,18 @@ async def root():
 async def fine_tune_model():
     return bedrock_client.fine_tune_bedrock_model()
 
-@app.post("/bedrock/invoke")
-async def invoke_model(input_text: str):
-    return bedrock_client.invoke_bedrock_model(input_text)
+@app.post("/bedrock/invoke/chat")
+async def invoke_model(payload: dict = Body(...)):
+    input_text = payload.get("input_text", "")
+    response = bedrock_client.invoke_bedrock_model(input_text)
+    return response
+
+@app.post("/bedrock/invoke/report")
+async def invoke_report_model(payload: dict = Body(...)):
+    input_text = payload.get("input_text", "")
+    formatted_text = f"Summarize the following security report:\n\n{input_text}"
+    response = bedrock_client.invoke_bedrock_model(formatted_text)
+    return response
 
 @app.post("/zap/basescan")
 async def zap_basescan(target_url: str):
