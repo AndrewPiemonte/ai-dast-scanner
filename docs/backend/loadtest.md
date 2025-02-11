@@ -165,7 +165,7 @@ Then open http://localhost:8089
 
 1. Performance Metrics:
 - Health check response time: < 200ms
-- ZAP scan response time: < 30s
+- ZAP scan response time: < 3 minutes
 - Error rate: < 1%
 
 2. Scaling Metrics:
