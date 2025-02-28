@@ -1,0 +1,78 @@
+"use client";
+import { ColumnDef } from "@tanstack/react-table"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { useEffect, useState } from "react";
+import { DataTable } from "./data-table";
+import type { Schema } from "../../../amplify/data/resource";
+
+
+export const TestTable = ({data, deleteItem} : { 
+    data : Array<Schema["reportInfo"]["type"]>;
+    deleteItem: (id: any) => Promise<void>;
+     } ) => {
+    const [tableData, setTableData] = useState<Array<Schema["reportInfo"]["type"]>>(data);
+    console.log(data)
+    console.log(tableData)
+    console.log("testtable")
+
+    useEffect(()=>{
+        try{
+            setTableData(data)
+        }
+        catch(error){
+            console.log(error)
+        }
+    }, [data])
+
+
+    const columns: ColumnDef<Schema["reportInfo"]["type"]>[] = [
+        {
+            accessorKey: "testName",
+            header: "Test Name",
+            cell: ({row}) =>{
+                const test = row.original;
+                 let path = `/chat/${test.id}`
+                return (
+                  <Link href={path} className="text-blue-500 hover:underline">
+                    {test.testName}
+                  </Link>
+                );
+            }
+        },
+        {
+            accessorKey: "testDate",
+            header: "Test Date"
+        },
+        {
+            accessorKey: "targetURL",
+            header: "Target URL"
+        },
+        {
+            accessorKey: "type",
+            header: "Type"
+        },
+        {
+            accessorKey: "status",
+            header: "Status"
+        },
+        {
+            id: "actions",
+            header: "Actions",
+            cell: ({ row }) => {
+              const test = row.original;
+              return (
+                <Button variant="destructive" onClick={() => deleteItem(test.id)}>
+                  Delete
+                </Button>
+              );
+            },
+        }
+    ]
+
+    return(
+        <DataTable data={tableData} columns={columns} />
+    )
+
+}
+
