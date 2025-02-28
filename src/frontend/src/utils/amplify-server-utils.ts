@@ -1,0 +1,1 @@
+import { authConfig } from "@/app/amplify-cognito-config";
