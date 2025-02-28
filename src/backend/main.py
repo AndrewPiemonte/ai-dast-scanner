@@ -2,9 +2,12 @@ import os
 import subprocess
 import datetime
 import asyncio
+import logging
 import boto3
 import json
-from fastapi import FastAPI, HTTPException
+import bedrock_client
+import prompts
+from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -12,9 +15,10 @@ from starlette.responses import Response
 from kubernetes import client, config
 from config import settings
 from urllib.parse import urlparse
-# from llm_service import LlmService
 
 app = FastAPI()
+logging.basicConfig(level=logging.INFO)
+
 
 # Allow all origins for now for local testing (prevents CORS errors)
 # TODO: Review and update origins once we are ready to deploy
@@ -27,7 +31,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -58,11 +62,27 @@ k8s_api = client.BatchV1Api()
 core_v1_api = client.CoreV1Api()
 s3_client = boto3.client("s3", region_name="us-west-2")
 
-# llm_service = LlmService()
-
 @app.get("/")
 async def root():
-    return {"message": "Hello, world!"}
+    return {"message": "Hello, world!!"}
+
+
+@app.post("/bedrock/invoke")
+async def invoke_model(payload: dict = Body(...)):
+    """Unified function for cybersecurity Q&A, security report summarization, and future modes."""
+
+    mode = payload.get("mode", "").strip().lower()
+    input_text = payload.get("input_text", "").strip()
+    input_report = payload.get("input_report", "").strip()
+
+    prompt_or_error = bedrock_client.generate_prompt(mode, input_text, input_report)
+
+    if isinstance(prompt_or_error, dict):  # If an error dictionary is returned
+        return prompt_or_error
+
+    # Invoke the model with the generated prompt
+    return bedrock_client.invoke_bedrock_model(prompt_or_error)
+
 
 @app.post("/zap/basescan")
 async def zap_basescan(target_url: str):

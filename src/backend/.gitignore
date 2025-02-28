@@ -2,3 +2,8 @@
 # config.py
 
 .venv
+.gitignore
+*.sh
+*.log
+*.json
+
