@@ -3,14 +3,23 @@ import json
 import time
 import datetime
 import prompts
+import logging
 from fastapi import HTTPException
 from botocore.exceptions import ClientError
 from fastapi import HTTPException
 from config import settings
 
+# Initialize logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Initialize Bedrock clients
-bedrock_client = boto3.client("bedrock", region_name="us-west-2")
-bedrock_runtime_client = boto3.client("bedrock-runtime", region_name="us-west-2")
+try:
+    bedrock_client = boto3.client("bedrock", region_name="us-west-2")
+    bedrock_runtime_client = boto3.client("bedrock-runtime", region_name="us-west-2")
+except BotoCoreError as e:
+    logger.error(f"Failed to initialize AWS Bedrock clients: {e}")
+    raise RuntimeError("AWS Bedrock client initialization failed.") from e
 
 # Define mode-specific fields to remove
 mode_specific_fields = {
@@ -42,7 +51,10 @@ def clean_report(data, fields_to_remove):
 
 def generate_prompt(mode: str, input_text: str, input_report: str):
     """Generates the appropriate prompt based on the selected mode."""
-    
+
+    if mode not in mode_prompts:
+        raise HTTPException(status_code=400, detail=f"Invalid mode '{mode}'. Available modes: {list(MODE_PROMPTS.keys())}.")
+
     # Validate inputs before proceeding
     missing_inputs = []
     if not input_text and mode == "chat":
@@ -51,7 +63,8 @@ def generate_prompt(mode: str, input_text: str, input_report: str):
         missing_inputs.append("input_report")
 
     if missing_inputs:
-        return {"error": f"Missing required input(s): {', '.join(missing_inputs)}"}
+        logger.warning(f"Missing inputs: {missing_inputs}")
+        raise HTTPException(status_code=400, detail=f"Missing required input(s): {', '.join(missing_inputs)}")
 
     # Select appropriate fields for cleaning
     fields_to_remove = mode_specific_fields.get(mode, [])
@@ -61,7 +74,8 @@ def generate_prompt(mode: str, input_text: str, input_report: str):
         clean_input_report = clean_report(json.loads(input_report), fields_to_remove)
         formatted_report = json.dumps(clean_input_report, indent=2)
     except json.JSONDecodeError:
-        return {"error": "Invalid input_report. Expected a JSON-formatted string."}
+        logger.error(f"JSONDecodeError: Invalid input_report - {e}")
+        raise HTTPException(status_code=400, detail="Invalid input_report. Expected a JSON-formatted string.")
 
     # Define mode behavior dynamically
     mode_templates = {
@@ -92,13 +106,23 @@ def invoke_bedrock_model(input_text: str):
             body=body
         )
 
-        # Parse the response
+            # Parse the response
         response_body = json.loads(response["body"].read())
 
-        return response_body.get("generation", "No generation output found")
+        # Ensure the response contains the expected field
+        if "generation" not in response_body:
+            logger.error("Missing 'generation' field in Bedrock response.")
+            raise HTTPException(status_code=500, detail="Invalid response from Bedrock model.")
 
-    except ClientError as err:
-        raise Exception(f"Error invoking Bedrock model: {err.response['Error']['Message']}")
+        return response_body["generation"]
+
+    except ClientError as e:
+            logger.error(f"ClientError while invoking Bedrock model: {e}")
+            raise HTTPException(status_code=500, detail="AWS Bedrock request failed.")
+    except json.JSONDecodeError as e:
+            logger.error(f"JSONDecodeError in response parsing: {e}")
+            raise HTTPException(status_code=500, detail="Malformed response from Bedrock model.")
     except Exception as e:
-        raise Exception(f"Unexpected error: {str(e)}")
+            logger.error(f"Unexpected error: {e}")
+            raise HTTPException(status_code=500, detail="Unexpected error while invoking Bedrock model.")
 
