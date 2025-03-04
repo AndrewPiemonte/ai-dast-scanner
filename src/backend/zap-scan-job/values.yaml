@@ -1,7 +1,10 @@
+# =============================
+# 🔹 Job Configuration
+# =============================
 job:
   name: ""  # This will be set dynamically by the backend server
   namespace: default
-  timestamp: ""  # This will be set dynamically by the backend server
+  scanid: ""  # This will be set dynamically by the backend server
   image:
     repository: ghcr.io/zaproxy/zaproxy
     tag: stable
@@ -9,8 +12,36 @@ job:
   s3Bucket: s3stack-aestbucket11161ed0-oyzazupebp7h
   scanTimeout: 3600  
 
+# =============================
+# 🔹 S3 Storage Configuration
+# =============================
 s3:
-  bucketName: "s3stack-aestbucket11161ed0-oyzazupebp7h"
+  bucketName: s3stack-aestbucket11161ed0-oyzazupebp7h
 
-targetUrl: "https://example.com"
-zapScanJobEnabled: false
+# =============================
+# 🔹 Scan Execution Settings
+# =============================
+scan_settings:
+  port: 9090
+  delay: 8
+  zapScanJobEnabled: false
+  scanMode: "zap-scan"  # Available options: baseline, fullscan, spider
+  targetUrl: "https://example.com"  # The target URL for scanning
+  timeout: 10  # Max time to wait for ZAP to start
+  config: "my_config.txt"  # Configuration file for scan settings
+  removeRules: "" # This will be set dynamically by the backend server
+  Spider_MAX_Duration: 0 # This will be set dynamically by the User
+  flags:
+    alpha: false
+    list_scans: false
+    ignoreWarnings: false
+    passiveScan: false
+    ajaxSpider: false
+    shortOutput: false
+    removeRules: false
+    Spider_MAX_Duration: false
+    debug: true
+
+
+
+

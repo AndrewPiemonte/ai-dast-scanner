@@ -6,4 +6,5 @@
 *.sh
 *.log
 *.json
-
+s3_downloads/
+Scripts/

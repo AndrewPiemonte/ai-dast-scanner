@@ -31,11 +31,38 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+#TODO: only returns: "status": "error",
+#TODO: Fix to check status instead of checking if file exits 
+#TODO: otherwise will keep triggering the same functions for mutiple checks
+
 # Remove the running_scans dictionary
 # Instead, we'll track scan state in S3 and through Kubernetes jobs
 
 async def start_zap_basescan(target_url: str):
-    """Start a ZAP baseline scan as a background task and return the scan ID immediately"""
+    """
+    Initiates a ZAP baseline security scan as a background task and returns a scan ID immediately.
+
+    This function performs the following steps:
+    1. Generates a unique scan ID based on the current timestamp and a UUID and other parameters for the scan.
+    2. Verifies the existence of the required chart path for deployment.
+    3. Stores the initial scan metadata in an S3 bucket.
+    4. Starts the ZAP scan asynchronously without blocking execution.
+    5. Attaches an error-handling callback to capture scan failures.
+
+    The scan runs in the background while execution continues, and the function returns the scan ID immediately.
+
+    Args:
+        target_url (str): The target URL to be scanned.
+
+    Returns:
+        str: The unique scan ID assigned to this scan.
+
+    Raises:
+        HTTPException: If the chart path does not exist or if storing the scan metadata in S3 fails.
+    """
+
+    #Generate parameters for the scan
     timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
     unique_id = str(uuid.uuid4())[:8]  # Use first 8 characters of UUID for brevity
     scan_id = f"{timestamp}-{unique_id}"
@@ -117,11 +144,39 @@ def handle_task_result(task, scan_id):
         logger.error(f"Error handling background task result for scan {scan_id}: {str(e)}")
 
 async def execute_zap_scan(scan_id, target_url, timestamp, job_name, release_name, namespace, chart_path):
-    """Execute the ZAP scan as a background task"""
+    """
+    Executes a ZAP baseline security scan as a background task.
+
+    This function performs the following steps:
+    1. Updates the scan status to "running" in S3.
+    2. Validates that the required chart path exists.
+    3. Triggers a Helm release to deploy the ZAP scan job.
+    4. Monitors the scan job until completion.
+    5. Updates the scan status in S3 based on success or failure.
+
+    If an error occurs at any stage, the scan status is updated to "failed" and logged.
+
+    Args:
+        scan_id (str): Unique identifier for the scan.
+        target_url (str): The URL to be scanned.
+        timestamp (str): Timestamp indicating when the scan was initiated. #TODO:Not being used
+        job_name (str): The name of the Kubernetes job running the scan.
+        release_name (str): Helm release name associated with the scan.
+        namespace (str): The Kubernetes namespace where the job is deployed.
+        chart_path (str): Path to the Helm chart used to deploy the scan.
+
+    Raises:
+        Exception: If there is a failure in executing the scan.
+    """
     try:
+
+        #TODO: maybe update to running after checking for error for less logic? do need to twice in cases it fail, if keep check
         # Update status to running in S3
         await update_scan_status(scan_id, "running")
         
+
+        #TODO: need to check this again? this is only called after start_zap_basescan which already checks for this... 
+        #TODO: If we plan calling this from another place then might need it, but for now i dont think we need to check twice
         # First, check if the chart path exists
         if not os.path.exists(chart_path):
             error_msg = f"Chart path does not exist: {chart_path}"
@@ -137,10 +192,11 @@ async def execute_zap_scan(scan_id, target_url, timestamp, job_name, release_nam
             "helm", "install", release_name, chart_path,
             "--namespace", namespace,
             "--set", f"targetUrl={target_url}",
-            "--set", "zapScanJobEnabled=true",
+            "--set", "scan_settings.zapScanJobEnabled=true",
             "--set", f"job.name={job_name}",  # Use job.name instead of job.fullName to match the Helm template
-            "--set", f"job.timestamp={scan_id}"   # Still pass timestamp for report naming
+            "--set", f"job.scanid={scan_id}"   
         ]
+        #TODO: this is a bit confusing setting timestamp as scan id, got me a bit confused
         
         logger.info(f"Executing Helm command: {' '.join(helm_command)}")
         
@@ -179,9 +235,26 @@ async def execute_zap_scan(scan_id, target_url, timestamp, job_name, release_nam
         await update_scan_status(scan_id, "failed", error=error_msg)
 
 async def update_scan_status(scan_id, status, error=None):
-    """Update the scan status in S3"""
+    """
+    Updates the scan status in an S3 bucket.
+
+    This function retrieves the existing scan status from S3 (if available), updates it with the 
+    new status and timestamp, and then writes the updated status back to S3.
+
+    - If no existing status file is found, a new one is created.
+    - The function logs an error if updating the status fails but does not interrupt execution.
+
+    Args:
+        scan_id (str): Unique identifier for the scan.
+        status (str): New status of the scan (e.g., "in_progress", "completed", "failed").
+        error (str, optional): Error message if the scan failed. Defaults to None.
+
+    Returns:
+        dict: The updated scan status dictionary.
+    """
     try:
         # First, try to get existing status
+        print(f"UPDATED:{status}")
         status_key = f"scan-status/{scan_id}.json"
         try:
             response = s3_client.get_object(Bucket=BUCKET_NAME, Key=status_key)
@@ -213,10 +286,43 @@ async def update_scan_status(scan_id, status, error=None):
         print(f"Failed to update scan status in S3: {str(e)}")
         # Continue execution even if status update fails
 
+#TODO: better to check status to see, maybe new status for ai phase
 async def check_scan_status(scan_id: str):
-    """Check the status of a scan and return report if available"""
+    """
+    Retrieves the status of a ZAP scan and returns the report if available.
+
+    This function checks the status of a scan by:
+    1. **Checking S3 for the final scan report**:
+       - If the report exists, it retrieves and returns it as JSON.
+    2. **If no report is found, checking the scan status in S3**:
+       - If the status is "failed", it returns an error message.
+       - If the scan is "initiated" or "running", it checks the Kubernetes job status.
+    3. **Verifying the Kubernetes job status** (if applicable):
+       - If the job has succeeded but no report exists, it returns `"processing"`.
+       - If the job has failed, it updates the status in S3 and returns `"failed"`.
+       - If the job is still active, it returns `"in progress"`.
+    4. **If no report or status is found, returning `"not_found"`**.
+
+    Args:
+        scan_id (str): The unique identifier for the scan.
+
+    Returns:
+        dict: A dictionary containing the scan status, message, and report (if available).
+
+    Possible Return Values:
+        - **"completed"** → Scan and report available in S3.
+        - **"processing"** → Scan job completed, report is still being generated.
+        - **"running" / "initiated"** → Scan is still in progress.
+        - **"failed"** → Scan failed (with error details if available).
+        - **"not_found"** → No scan report or status was found in S3.
+        - **"error"** → Unexpected error occurred.
+
+    Raises:
+        None: This function handles all exceptions internally and returns error messages in the response.
+    """
+
     # First, check if the report exists in S3
-    report_key = f"{scan_id}-report.json"
+    report_key = f"{scan_id}.json"
     status_key = f"scan-status/{scan_id}.json"
     
     try:
@@ -226,32 +332,35 @@ async def check_scan_status(scan_id: str):
             # If we're here, the report exists
             report_response = s3_client.get_object(Bucket=BUCKET_NAME, Key=report_key)
             report_data = json.loads(report_response['Body'].read().decode('utf-8'))
+            report_string = json.dumps(report_data, indent=2)
+            
+            #logger.info(f"{report_string}")
+            type_check = type(report_string)
+            logger.info(f"{type_check}")
             
             #! In case we want to bind AI from here
             # # Process with Bedrock for AI analysis
-            # ai_analysis = await process_report_with_ai(report_data)
-            
-            # return {
-            #     "scan_id": scan_id,
-            #     "status": "completed",
-            #     "message": "Scan completed successfully",
-            #     "report": report_data,
-            #     "ai_analysis": ai_analysis
-            # }
+            #TODO:Problem if we can checking the file it will try to generate everytime, maybe change status to generating
+            #so we dont do this multiple times, which causes an error
+            ai_analysis =  bedrock_client.invoke(mode="report" , input_text="", input_report=report_string)
 
             return {
                 "scan_id": scan_id,
                 "status": "completed",
                 "message": "Scan completed successfully",
-                "report": report_data
+                "report": report_data,
+                "ai_analysis": ai_analysis
             }
 
         except s3_client.exceptions.NoSuchKey:
             # Report doesn't exist yet, check the status file
+            logger.info("NOT FOUND")
             pass
         
+        #TODO: Debug this Never got status besides "Error retrieving scan status"
         # Check the status file
         try:
+            logger.info("RETRIEVING!!!")
             status_response = s3_client.get_object(Bucket=BUCKET_NAME, Key=status_key)
             status_data = json.loads(status_response['Body'].read().decode('utf-8'))
             
@@ -328,102 +437,28 @@ async def check_scan_status(scan_id: str):
             "message": f"Error retrieving scan status: {str(e)}"
         }
 
-async def process_report_with_ai(report_data):
-    """Process the ZAP report with Bedrock for AI analysis"""
-    try:
-        # Convert report to string for the AI model
-        report_json_str = json.dumps(report_data)
-        
-        # Generate prompt for report analysis
-        prompt = bedrock_client.generate_prompt("report", "", report_json_str)
-        
-        # Invoke Bedrock model
-        ai_analysis = bedrock_client.invoke_bedrock_model(prompt)
-        
-        return ai_analysis
-    except Exception as e:
-        logging.error(f"Error processing report with AI: {str(e)}")
-        return f"AI analysis failed: {str(e)}"
-
-async def zap_basescan(target_url: str):
-    """Legacy synchronous ZAP scan function (kept for compatibility)"""
-    # This function remains unchanged for backward compatibility
-    # but we'll redirect it to use the new async approach
-
-    timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-    unique_id = str(uuid.uuid4())[:8]  # Use first 8 characters of UUID for brevity
-    scan_id = f"{timestamp}-{unique_id}"
-    values_job_name = "zap-basescan-job"
-    release_name = f"zap-basescan-{scan_id}"
-    job_name = f"{values_job_name}-{scan_id}"
-    namespace = "default"
-    chart_path = "/app/zap-scan-job"
-
-    try:
-        # Trigger Helm release with timestamp
-        helm_command = [
-            "helm", "install", release_name, chart_path,
-            "--namespace", namespace,
-            "--set", f"targetUrl={target_url}",
-            "--set", "zapScanJobEnabled=true",
-            "--set", f"job.name={job_name}",
-            "--set", f"job.timestamp={scan_id}"
-        ]
-        result = subprocess.run(
-            helm_command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            timeout=60
-        )
-
-        if result.returncode != 0:
-            raise HTTPException(status_code=500, detail=f"Helm release failed: {result.stderr}")
-
-        print(f"Helm release triggered. Output:\n{result.stdout}")
-
-        # Wait for job completion
-        await wait_for_job_registration(job_name, namespace)
-        await wait_for_job_to_complete(job_name, namespace, scan_id)  # Use scan_id instead of timestamp
-
-        # Get report
-        pod_name = await get_pod_for_job(job_name, namespace)
-        report_filename = f"{scan_id}-report.json"  # Use scan_id for report filename
-        
-        scan_results = await get_zap_report(report_filename)
-        return scan_results # TODO: For now , leave it as it is since I'll turn off LLM frequently
-
-        # ai_analysis = await llm_service.analyze_zap_report(scan_results)
-
-        # return {
-        #     "ai_analysis": ai_analysis,
-        #     "scan_results": scan_results,
-        #     "metadata": {
-        #         "timestamp": timestamp,
-        #         "target_url": target_url,
-        #     }
-        # }
-
-        # # File clean up. Not enabled atm.
-        # finally:
-        #     # File deletion
-        #     report_path = f"/reports/{report_filename}"
-        #     if os.path.exists(report_path):
-        #         os.remove(report_path)
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "message": f"Scan failed: {str(e)}",
-                "job_name": job_name,
-                "timestamp": timestamp,
-                "target_url": target_url
-            }
-        )
-
 async def wait_for_job_registration(job_name: str, namespace: str):
-    """Wait for the Job to be registered in Kubernetes."""
+    """
+    Waits for a Kubernetes Job to be registered in the specified namespace.
+
+    This function repeatedly queries the Kubernetes API to check if the job has been created.
+    It retries a maximum number of times with a delay between attempts. If the job is not
+    found within the allowed retries, an HTTPException is raised.
+
+    Steps:
+    1. Queries the Kubernetes API for the job.
+    2. If the job exists, logs the job name and exits successfully.
+    3. If the job does not exist, retries up to `max_retries` times, waiting `delay_seconds` between attempts.
+    4. If the job is still not found after all retries, raises an HTTP 500 exception.
+
+    Args:
+        job_name (str): The name of the Kubernetes Job to wait for.
+        namespace (str): The namespace in which the Job is expected to be registered.
+
+    Raises:
+        HTTPException: If the job is not registered within the expected time.
+        client.exceptions.ApiException: If an API error occurs other than a 404 (Not Found).
+    """
     max_retries = 15
     delay_seconds = 5
 
@@ -446,7 +481,30 @@ async def wait_for_job_registration(job_name: str, namespace: str):
     raise HTTPException(status_code=500, detail=f"Job '{job_name}' was not registered in Kubernetes within the expected time.")
 
 async def get_pod_for_job(job_name: str, namespace: str) -> str:
-    """Get the pod associated with a specific Job."""
+    """
+    Retrieves the name of the pod associated with a specific Kubernetes Job.
+
+    This function queries the Kubernetes API to find a pod that matches the given job name.
+    It retries multiple times with a delay, allowing time for the pod to be created and become ready.
+
+    Steps:
+    1. **Query Kubernetes for pods matching the job name** using a label selector.
+    2. **If a pod is found**, check its status:
+       - If the pod is `"Running"` or `"Succeeded"`, return its name.
+       - If the pod exists but is not yet `"Running"`, retry until the max attempts are reached.
+    3. **If no pod is found**, retry up to `max_retries` times, waiting `delay_seconds` between attempts.
+    4. **If no pod is found after all retries**, raise an `HTTPException`.
+
+    Args:
+        job_name (str): The name of the Kubernetes Job whose pod should be retrieved.
+        namespace (str): The Kubernetes namespace where the Job is running.
+
+    Returns:
+        str: The name of the pod associated with the Job if found.
+
+    Raises:
+        HTTPException: If no pod is found within the expected time.
+    """
     max_retries = 10  # Retry up to 10 times
     delay_seconds = 5  # Start with a 5-second delay
 
@@ -469,13 +527,39 @@ async def get_pod_for_job(job_name: str, namespace: str) -> str:
 
     raise HTTPException(status_code=500, detail=f"No pod found for job '{job_name}' within the expected time.")
 
+
 async def wait_for_job_to_complete(job_name: str, namespace: str, scan_id: str):
+    """
+    Waits for a Kubernetes Job to complete and verifies the ZAP scan report.
+
+    This function continuously checks the status of the specified Kubernetes Job until 
+    it reaches a terminal state (`Succeeded` or `Failed`). It also retrieves logs from 
+    the associated Pod to verify if the ZAP scan report was successfully generated.
+
+    Steps:
+    1. Retrieves the Job status and associated Pod.
+    2. If the Pod's phase is `Succeeded` or `Failed`, fetches logs to check for the report.
+    3. If the expected report filename is found in logs, confirms scan completion.
+    4. If no valid report is found, raises an `HTTPException` with log details.
+    5. If the job is still running, retries up to `max_retries` with a `delay_seconds` interval.
+    6. If the job does not complete within the timeout, raises an `HTTPException`.
+
+    Args:
+        job_name (str): The name of the Kubernetes Job to monitor.
+        namespace (str): The Kubernetes namespace where the Job is running.
+        scan_id (str): The unique scan ID associated with the Job.
+
+    Raises:
+        HTTPException: If the job fails, does not generate a valid report, or exceeds the timeout.
+        Exception: If an unexpected error occurs during job monitoring.
+    """
+
     max_retries = 60
     delay_seconds = 10
 
     for attempt in range(max_retries):
         try:
-            job_status = k8s_api.read_namespaced_job_status(name=job_name, namespace=namespace)
+            job_status = k8s_api.read_namespaced_job_status(name=job_name, namespace=namespace) #TODO: Not used
             pod_name = await get_pod_for_job(job_name, namespace)
             pod = core_v1_api.read_namespaced_pod(name=pod_name, namespace=namespace)
 
@@ -487,8 +571,8 @@ async def wait_for_job_to_complete(job_name: str, namespace: str, scan_id: str):
                 )
                 
                 # Check for successful report generation with correct filename
-                report_filename = f"{scan_id}-report.json"
-                if f"Job report generated report /zap/wrk/{report_filename}" in logs:
+                report_filename = f"{scan_id}.json"
+                if f"Scan completed successfully. Report saved at /zap/wrk/{report_filename}" in logs:
                     print(f"ZAP scan completed and report generated for job '{job_name}'")
                     
                     # Sleep for 2 seconds to ensure the file is fully written
@@ -528,6 +612,10 @@ async def wait_for_job_to_complete(job_name: str, namespace: str, scan_id: str):
         detail=f"Job '{job_name}' did not complete within the expected time."
     )
 
+
+################################################################################
+#       OLD STUFF
+################################################################################
 async def get_zap_report(report_filename: str):
     max_retries = 3
     delay_seconds = 5
@@ -555,3 +643,83 @@ async def get_zap_report(report_filename: str):
                 status_code=500,
                 detail=f"Error reading report: {str(e)}"
             )
+    
+
+async def zap_basescan(target_url: str):
+    """Legacy synchronous ZAP scan function (kept for compatibility)"""
+    # This function remains unchanged for backward compatibility
+    # but we'll redirect it to use the new async approach
+
+    timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    unique_id = str(uuid.uuid4())[:8]  # Use first 8 characters of UUID for brevity
+    scan_id = f"{timestamp}-{unique_id}"
+    values_job_name = "zap-basescan-job"
+    release_name = f"zap-basescan-{scan_id}"
+    job_name = f"{values_job_name}-{scan_id}"
+    namespace = "default"
+    chart_path = "/app/zap-scan-job"
+
+    try:
+        print("Triggering job")
+        # Trigger Helm release with timestamp
+        helm_command = [
+            "helm", "install", release_name, chart_path,
+            "--namespace", namespace,
+            "--set", f"targetUrl={target_url}",
+            "--set", "zapScanJobEnabled=true",
+            "--set", f"job.name={job_name}",
+            "--set", f"job.scanid={scan_id}"
+        ]
+        print("setting job")
+        result = subprocess.run(
+            helm_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=60
+        )
+
+        if result.returncode != 0:
+            raise HTTPException(status_code=500, detail=f"Helm release failed: {result.stderr}")
+
+        print(f"Helm release triggered. Output:\n{result.stdout}")
+
+        # Wait for job completion
+        await wait_for_job_registration(job_name, namespace)
+        await wait_for_job_to_complete(job_name, namespace, scan_id)  # Use scan_id instead of timestamp
+
+        # Get report
+        pod_name = await get_pod_for_job(job_name, namespace)
+        report_filename = f"{scan_id}.json"  # Use scan_id for report filename
+        
+        scan_results = await get_zap_report(report_filename)
+        return scan_results # TODO: For now , leave it as it is since I'll turn off LLM frequently
+
+        # ai_analysis = await llm_service.analyze_zap_report(scan_results)
+
+        # return {
+        #     "ai_analysis": ai_analysis,
+        #     "scan_results": scan_results,
+        #     "metadata": {
+        #         "timestamp": timestamp,
+        #         "target_url": target_url,
+        #     }
+        # }
+
+        # # File clean up. Not enabled atm.
+        # finally:
+        #     # File deletion
+        #     report_path = f"/reports/{report_filename}"
+        #     if os.path.exists(report_path):
+        #         os.remove(report_path)
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": f"Scan failed: {str(e)}",
+                "job_name": job_name,
+                "timestamp": timestamp,
+                "target_url": target_url
+            }
+        )

@@ -7,7 +7,7 @@ import logging
 from fastapi import HTTPException
 from botocore.exceptions import ClientError
 from fastapi import HTTPException
-# from config import settings # TODO: temp comment out. Please uncomment me if needed @Anderw!
+from config import settings
 
 # Initialize logger
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +25,7 @@ except BotoCoreError as e:
 mode_specific_fields = {
     "chat": ["instances", "pluginid", "alertRef", "wascid", "sourceid", "cweid", "otherinfo", "sequences", "@programName", "@version", "@port", "@ssl"],  
     "report": ["instances", "pluginid", "alertRef", "wascid", "sourceid", "cweid", "otherinfo", "sequences", "@programName", "@version", "@port", "@ssl"],
+    # Future modes can be easily added here
 }
 
 #Define available modes and their corresponding prompts
@@ -33,6 +34,19 @@ mode_prompts = {
     "report": prompts.CYBERSECURITY_PROMPT_TEMPLATE_REPORT,
     # Future modes can be easily added here
 }
+
+#TODO: make function async causes error now
+def invoke(mode, input_report, input_text=None):
+    # Generate the appropriate prompt
+    prompt = generate_prompt(mode, input_text, input_report)
+
+    try:
+        # Invoke the model with the generated prompt
+        response = invoke_bedrock_model(prompt)
+        return {"response": response}  # Clean response format
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to invoke LLM: {str(e)}")
+
 
 def list_bedrock_models():
     """List available AWS Bedrock foundation models"""
@@ -47,7 +61,6 @@ def clean_report(data, fields_to_remove):
     elif isinstance(data, list):
         return [clean_report(i, fields_to_remove) for i in data]
     return data
-
 
 def generate_prompt(mode: str, input_text: str, input_report: str):
     """Generates the appropriate prompt based on the selected mode."""
@@ -100,9 +113,7 @@ def invoke_bedrock_model(input_text: str):
 
         # Invoke the model
         response = bedrock_runtime_client.invoke_model(
-            # modelId=settings.BASE_MODEL_ID,
-            modelId="amazon.titan-text-express-v1",  # TODO: temp value. Please update me @Andrew!
-            contentType="application/json",
+            modelId="meta.llama3-1-70b-instruct-v1:0",
             accept="application/json",
             body=body
         )

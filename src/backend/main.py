@@ -82,17 +82,15 @@ async def invoke_model(payload: dict = Body(...)):
     input_text = payload.get("input_text", "").strip()
     input_report = payload.get("input_report", "").strip()
 
-   # Generate the appropriate prompt
-    prompt = bedrock_client.generate_prompt(mode, input_text, input_report)
-
     try:
-        # Invoke the model with the generated prompt
-        response = bedrock_client.invoke_bedrock_model(prompt)
-        return {"response": response}  # Clean response format
+        return bedrock_client.invoke(mode, input_text, input_report) 
+    except HTTPException as e:
+        raise e  # Reraise HTTP exceptions
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to invoke LLM: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
+#TODO: update to receive args so we can configure the scan like dict
 @app.post("/zap/basescan")
 async def zap_basescan(target_url: str):
     # Validate URL
@@ -117,11 +115,15 @@ async def zap_basescan(target_url: str):
         logger.error(f"Error starting ZAP scan: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to start ZAP scan: {str(e)}")
 
+
+#TODO: Add an event where all pscan and ascan is generated 
+#TODO: these parameers can be different for each scan script, maybe have a json file where
+#TODO: developres can add new configuration for scans for their scans configuration py files
 @app.on_event("startup")
 async def startup_event():
     logger.info("Application starting up")
     # Do any additional startup tasks here
-
+    
 @app.get("/zap/scan-status/{scan_id}")
 async def get_scan_status(scan_id: str):
     """Check the status of a ZAP scan and return the report if available"""

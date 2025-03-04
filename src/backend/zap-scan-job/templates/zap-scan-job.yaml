@@ -1,4 +1,4 @@
-{{- if .Values.zapScanJobEnabled }}
+{{- if .Values.scan_settings.zapScanJobEnabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -30,12 +30,41 @@ spec:
           - "sh"
           - "-c"
           - |
-            zap-baseline.py -t "{{ .Values.targetUrl }}" \
-              -J "{{ .Values.job.timestamp }}-report.json" \
-              -d -T 10 -I || true
-            if [ ! -f "/zap/wrk/{{ .Values.job.timestamp }}-report.json" ]; then
-              echo '{"scan_status":"failed","error":"Scan failed to complete","timestamp":"{{ .Values.job.timestamp }}"}' > "/zap/wrk/{{ .Values.job.timestamp }}-report.json"
-            fi
+            CMD='PYTHONPATH="/zap:/zap/wrk" python3 /zap/wrk/{{ .Values.scan_settings.scanMode }}.py -t "{{ .Values.scan_settings.targetUrl }}" {{- if .Values.scan_settings.flags.list_scans }} --list "/zap/wrk/scan-list-{{ .Values.job.scanid }}.json" {{- end }} -J "/zap/wrk/{{ .Values.job.scanid }}.json" -c "{{ .Values.scan_settings.config }}" -T {{ .Values.scan_settings.timeout }} 
+              {{- if .Values.scan_settings.flags.remove }} --remove "{{ .Values.scan_settings.removeRules }}" {{- end }}
+              {{- if .Values.scan_settings.flags.Spider_MAX_Duration }} -m {{ .Values.scan_settings.Spider_MAX_Duration }} {{- end }} 
+              {{- if .Values.scan_settings.flags.alpha }} -a {{- end }} 
+              {{- if .Values.scan_settings.flags.ignoreWarnings }} -I {{- end }} 
+              {{- if .Values.scan_settings.flags.ajaxSpider }} -j {{- end }} 
+              {{- if .Values.scan_settings.flags.shortOutput }} -s {{- end }} 
+              {{- if .Values.scan_settings.flags.passiveScan }} --disable-passive-scan {{- end }} 
+              {{- if .Values.scan_settings.flags.port }} -P  {{ .Values.scan_settings.flags.port }} {{- end }}
+              {{- if .Values.scan_settings.flags.delay }} -D {{ .Values.scan_settings.flags.delay }} {{- end }} 
+              {{- if .Values.scan_settings.flags.debug }} -d {{- end }} || true'
+
+            #Print the command for debugging
+            echo "Running the following command (For debug):"
+            echo "$CMD"
+
+            PYTHONPATH="/zap:/zap/wrk" python3 /zap/wrk/{{ .Values.scan_settings.scanMode }}.py -t "{{ .Values.scan_settings.targetUrl }}" {{- if .Values.scan_settings.flags.list_scans }} --list "/zap/wrk/scan-list-{{ .Values.job.scanid }}.json" {{- end }} -J "/zap/wrk/{{ .Values.job.scanid }}.json" -c "{{ .Values.scan_settings.config }}" -T {{ .Values.scan_settings.timeout }} 
+              {{- if .Values.scan_settings.flags.remove }} --remove "{{ .Values.scan_settings.removeRules }}" {{- end }}
+              {{- if .Values.scan_settings.flags.Spider_MAX_Duration }} -m {{ .Values.scan_settings.Spider_MAX_Duration }} {{- end }} 
+              {{- if .Values.scan_settings.flags.alpha }} -a {{- end }} 
+              {{- if .Values.scan_settings.flags.ignoreWarnings }} -I {{- end }} 
+              {{- if .Values.scan_settings.flags.ajaxSpider }} -j {{- end }} 
+              {{- if .Values.scan_settings.flags.shortOutput }} -s {{- end }} 
+              {{- if .Values.scan_settings.flags.passiveScan }} --disable-passive-scan {{- end }} 
+              {{- if .Values.scan_settings.flags.port }} -P  {{ .Values.scan_settings.flags.port }} {{- end }}
+              {{- if .Values.scan_settings.flags.delay }} -D {{ .Values.scan_settings.flags.delay }} {{- end }} 
+              {{- if .Values.scan_settings.flags.debug }} -d {{- end }} || true
+
+              if [ ! -f "/zap/wrk/{{ .Values.job.scanid }}.json" ]; then
+                  echo '{"scan_status":"failed","error":"Scan failed to complete","timestamp":"{{ .Values.job.scanid }}"}' > "/zap/wrk/logs/{{ .Values.job.scanid }}.json"
+              else
+                  echo "Scan completed successfully. Report saved at /zap/wrk/{{ .Values.job.scanid }}.json"
+              fi
+
+            
         volumeMounts:
         - name: zap-reports
           mountPath: /zap/wrk
