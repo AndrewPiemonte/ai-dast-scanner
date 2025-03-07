@@ -26,45 +26,61 @@ spec:
       containers:
       - name: zap-baseline
         image: {{ .Values.job.image.repository }}:{{ .Values.job.image.tag }}
-        command:
-          - "sh"
-          - "-c"
-          - |
-            CMD='PYTHONPATH="/zap:/zap/wrk" python3 /zap/wrk/{{ .Values.scan_settings.scanMode }}.py -t "{{ .Values.scan_settings.targetUrl }}" {{- if .Values.scan_settings.flags.list_scans }} --list "/zap/wrk/scan-list-{{ .Values.job.scanid }}.json" {{- end }} -J "/zap/wrk/{{ .Values.job.scanid }}.json" -c "{{ .Values.scan_settings.config }}" -T {{ .Values.scan_settings.timeout }} 
-              {{- if .Values.scan_settings.flags.remove }} --remove "{{ .Values.scan_settings.removeRules }}" {{- end }}
-              {{- if .Values.scan_settings.flags.Spider_MAX_Duration }} -m {{ .Values.scan_settings.Spider_MAX_Duration }} {{- end }} 
-              {{- if .Values.scan_settings.flags.alpha }} -a {{- end }} 
-              {{- if .Values.scan_settings.flags.ignoreWarnings }} -I {{- end }} 
-              {{- if .Values.scan_settings.flags.ajaxSpider }} -j {{- end }} 
-              {{- if .Values.scan_settings.flags.shortOutput }} -s {{- end }} 
-              {{- if .Values.scan_settings.flags.passiveScan }} --disable-passive-scan {{- end }} 
-              {{- if .Values.scan_settings.flags.port }} -P  {{ .Values.scan_settings.flags.port }} {{- end }}
-              {{- if .Values.scan_settings.flags.delay }} -D {{ .Values.scan_settings.flags.delay }} {{- end }} 
-              {{- if .Values.scan_settings.flags.debug }} -d {{- end }} || true'
+        command: ["python3", "/zap/wrk/run_scan.py"]
+        env:
+          # Mandatory Environment Variables
+          - name: SCAN_MODE
+            value: "{{ .Values.scan_settings.scanMode }}"
+          - name: SCAN_ID
+            value: "{{ .Values.job.scanid }}"
+          
+          # Flags (Enabled/Disabled)
+          - name: ENABLE_ALPHA
+            value: "{{ .Values.scan_settings.flags.ENABLE_ALPHA }}"
+          - name: ENABLE_IGNORE_WARNINGS
+            value: "{{ .Values.scan_settings.flags.ENABLE_IGNORE_WARNINGS }}"
+          - name: ENABLE_AJAX_SPIDER
+            value: "{{ .Values.scan_settings.flags.ENABLE_AJAX_SPIDER }}"
+          - name: ENABLE_SHORT_OUTPUT
+            value: "{{ .Values.scan_settings.flags.ENABLE_SHORT_OUTPUT }}"
+          - name: ENABLE_PASSIVE_SCAN
+            value: "{{ .Values.scan_settings.flags.ENABLE_PASSIVE_SCAN }}"
+          - name: ENABLE_DEBUG
+            value: "{{ .Values.scan_settings.flags.ENABLE_DEBUG }}"
+          - name: ENABLE_TARGET_URL
+            value: "{{ .Values.scan_settings.flags.ENABLE_TARGET_URL }}"
+          - name: ENABLE_SCAN_CONFIG
+            value: "{{ .Values.scan_settings.flags.ENABLE_SCAN_CONFIG }}"
+          - name: ENABLE_SCAN_TIMEOUT
+            value: "{{ .Values.scan_settings.flags.ENABLE_SCAN_TIMEOUT }}"
+          - name: ENABLE_REMOVE
+            value: "{{ .Values.scan_settings.flags.ENABLE_REMOVE }}"
+          - name: ENABLE_SPIDER_MAX_DURATION
+            value: "{{ .Values.scan_settings.flags.ENABLE_SPIDER_MAX_DURATION }}"
+          - name: ENABLE_PORT
+            value: "{{ .Values.scan_settings.flags.ENABLE_PORT }}"
+          - name: ENABLE_DELAY
+            value: "{{ .Values.scan_settings.flags.ENABLE_DELAY }}"
+          - name: ENABLE_OUTPUT_FILE_JSON
+            value: "{{ .Values.scan_settings.flags.ENABLE_OUTPUT_FILE_JSON }}"
 
-            #Print the command for debugging
-            echo "Running the following command (For debug):"
-            echo "$CMD"
-
-            PYTHONPATH="/zap:/zap/wrk" python3 /zap/wrk/{{ .Values.scan_settings.scanMode }}.py -t "{{ .Values.scan_settings.targetUrl }}" {{- if .Values.scan_settings.flags.list_scans }} --list "/zap/wrk/scan-list-{{ .Values.job.scanid }}.json" {{- end }} -J "/zap/wrk/{{ .Values.job.scanid }}.json" -c "{{ .Values.scan_settings.config }}" -T {{ .Values.scan_settings.timeout }} 
-              {{- if .Values.scan_settings.flags.remove }} --remove "{{ .Values.scan_settings.removeRules }}" {{- end }}
-              {{- if .Values.scan_settings.flags.Spider_MAX_Duration }} -m {{ .Values.scan_settings.Spider_MAX_Duration }} {{- end }} 
-              {{- if .Values.scan_settings.flags.alpha }} -a {{- end }} 
-              {{- if .Values.scan_settings.flags.ignoreWarnings }} -I {{- end }} 
-              {{- if .Values.scan_settings.flags.ajaxSpider }} -j {{- end }} 
-              {{- if .Values.scan_settings.flags.shortOutput }} -s {{- end }} 
-              {{- if .Values.scan_settings.flags.passiveScan }} --disable-passive-scan {{- end }} 
-              {{- if .Values.scan_settings.flags.port }} -P  {{ .Values.scan_settings.flags.port }} {{- end }}
-              {{- if .Values.scan_settings.flags.delay }} -D {{ .Values.scan_settings.flags.delay }} {{- end }} 
-              {{- if .Values.scan_settings.flags.debug }} -d {{- end }} || true
-
-              if [ ! -f "/zap/wrk/{{ .Values.job.scanid }}.json" ]; then
-                  echo '{"scan_status":"failed","error":"Scan failed to complete","timestamp":"{{ .Values.job.scanid }}"}' > "/zap/wrk/logs/{{ .Values.job.scanid }}.json"
-              else
-                  echo "Scan completed successfully. Report saved at /zap/wrk/{{ .Values.job.scanid }}.json"
-              fi
-
-            
+          # Values (Only applied if their corresponding flag is enabled)
+          - name: TARGET_URL
+            value: "{{ .Values.scan_settings.values.TARGET_URL }}"
+          - name: SCAN_CONFIG
+            value: "{{ .Values.scan_settings.values.SCAN_CONFIG }}"
+          - name: SCAN_TIMEOUT
+            value: "{{ .Values.scan_settings.values.SCAN_TIMEOUT }}"
+          - name: REMOVE_VALUE
+            value: "{{ .Values.scan_settings.values.REMOVE_VALUE }}"
+          - name: SPIDER_MAX_DURATION
+            value: "{{ .Values.scan_settings.values.SPIDER_MAX_DURATION }}"
+          - name: PORT_NUMBER
+            value: "{{ .Values.scan_settings.values.PORT_NUMBER }}"
+          - name: DELAY_TIME
+            value: "{{ .Values.scan_settings.values.DELAY_TIME }}"
+          - name: OUTPUT_FILE_JSON
+            value: "{{ .Values.scan_settings.scanMode }}-{{ .Values.job.scanid }}.json"
         volumeMounts:
         - name: zap-reports
           mountPath: /zap/wrk

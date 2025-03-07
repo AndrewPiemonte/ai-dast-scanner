@@ -2,8 +2,6 @@
 
 .DS_Store
 
-config.py
-
 venv/
 pyvenv.cfg
 cdk/source/Lib

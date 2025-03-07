@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import boto3
+import os
 import json
 import bedrock_client
 import owasp_client
@@ -10,7 +11,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 from kubernetes import client, config
-# from config import settings  # TODO: temp comment out. Please uncomment me if needed @Andrew!
+from config import settings  # TODO: temp comment out. Please uncomment me if needed @Andrew!
 from urllib.parse import urlparse
 import sys
 
@@ -69,6 +70,20 @@ core_v1_api = client.CoreV1Api()
 s3_client = boto3.client("s3", region_name="us-west-2")
 
 
+#TODO: Add an event where all pscan and ascan is generated 
+#TODO: these parameers can be different for each scan script, maybe have a json file where
+#TODO: developres can add new configuration for scans for their scans configuration py files
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Application starting up")
+    
+    # Only run this upload function once
+    if os.getenv("UPLOAD_ONCE", "true") == "true":
+        os.environ["UPLOAD_ONCE"] = "false"  # Prevent duplicate execution
+        owasp_client.upload_files_to_s3("scan_scripts", settings.BUCKET_NAME)
+
+
+#Testing connection..
 @app.get("/")
 async def root():
     return {"message": "Hello, world!!"}
@@ -90,39 +105,38 @@ async def invoke_model(payload: dict = Body(...)):
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
-#TODO: update to receive args so we can configure the scan like dict
 @app.post("/zap/basescan")
-async def zap_basescan(target_url: str):
-    # Validate URL
-    try:
-        result = urlparse(target_url)
-        if not all([result.scheme, result.netloc]):
-            raise HTTPException(
-                status_code=400, 
-                detail="Invalid URL format. Must include scheme (http/https)"
-            )
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid URL format")
+async def zap_basescan(scan_request: dict):
+    """
+    Starts a ZAP baseline scan with configurable parameters provided in a dictionary.
 
-    logger.info(f"Starting ZAP scan for URL: {target_url}")
-    
+    Args:
+        scan_request (dict): Dictionary containing scan parameters, including:
+            - scanMode (str, optional): The mode of the scan (e.g., "zap-scan").
+            - flags (dict, optional): Dictionary of scan flags (e.g., ENABLE_DEBUG, ENABLE_AJAX_SPIDER, etc.).
+            - values (dict, optional): Dictionary of configurable scan values (e.g., SCAN_CONFIG, TIMEOUT, etc.).
+            - target_url (str, optional): The target URL for scanning (not mandatory).
+
+    Returns:
+        dict: A response containing the scan_id, status, and message.
+
+    Raises:
+        HTTPException: If scan initiation fails.
+    """
+
     try:
-        # Start the scan in background and return the scan_id immediately
-        scan_id = await owasp_client.start_zap_basescan(target_url)
+        # Start the scan with extracted parameters
+        scan_id = await owasp_client.start_zap_basescan(
+            scan_mode=scan_request.get("scanMode", "zap-scan"),
+            flags = scan_request.get("flags", {}),
+            values = scan_request.get("values", {}),
+        )
         logger.info(f"Scan initiated with ID: {scan_id}")
         return {"scan_id": scan_id, "status": "initiated", "message": "Scan started successfully"}
     except Exception as e:
         logger.error(f"Error starting ZAP scan: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to start ZAP scan: {str(e)}")
 
-
-#TODO: Add an event where all pscan and ascan is generated 
-#TODO: these parameers can be different for each scan script, maybe have a json file where
-#TODO: developres can add new configuration for scans for their scans configuration py files
-@app.on_event("startup")
-async def startup_event():
-    logger.info("Application starting up")
-    # Do any additional startup tasks here
     
 @app.get("/zap/scan-status/{scan_id}")
 async def get_scan_status(scan_id: str):
@@ -134,3 +148,8 @@ async def get_scan_status(scan_id: str):
     except Exception as e:
         logger.error(f"Error checking scan status: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to check scan status: {str(e)}")
+    
+
+
+
+

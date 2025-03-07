@@ -113,7 +113,7 @@ def invoke_bedrock_model(input_text: str):
 
         # Invoke the model
         response = bedrock_runtime_client.invoke_model(
-            modelId="meta.llama3-1-70b-instruct-v1:0",
+            modelId=settings.BASE_MODEL_ID,
             accept="application/json",
             body=body
         )

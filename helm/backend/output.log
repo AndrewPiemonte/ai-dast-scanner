@@ -1,23 +1,0 @@
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0* Host a36abb63983b6472483debf966e2cafd-698803526.us-west-2.elb.amazonaws.com:80 was resolved.
-* IPv6: (none)
-* IPv4: 35.82.169.252, 52.34.120.150
-*   Trying 35.82.169.252:80...
-* Connected to a36abb63983b6472483debf966e2cafd-698803526.us-west-2.elb.amazonaws.com (35.82.169.252) port 80
-> POST /bedrock/invoke?input_text=Summarize%20OWASP%20Top%2010%20vulnerabilities.&model_id=amazon.titan-text-lite-v1 HTTP/1.1
-> Host: a36abb63983b6472483debf966e2cafd-698803526.us-west-2.elb.amazonaws.com
-> User-Agent: curl/8.9.1
-> Accept: */*
-> 
-* Request completely sent off
-< HTTP/1.1 500 Internal Server Error
-< date: Mon, 03 Feb 2025 05:01:53 GMT
-< server: uvicorn
-< content-length: 188
-< content-type: application/json
-< 
-{ [188 bytes data]
-100   188  100   188    0     0    522      0 --:--:-- --:--:-- --:--:--   523
-* Connection #0 to host a36abb63983b6472483debf966e2cafd-698803526.us-west-2.elb.amazonaws.com left intact
-{"detail":"Error invoking Bedrock model: An error occurred (AccessDeniedException) when calling the InvokeModel operation: You don't have access to the model with the specified model ID."}

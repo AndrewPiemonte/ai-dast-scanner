@@ -22,25 +22,34 @@ s3:
 # 🔹 Scan Execution Settings
 # =============================
 scan_settings:
-  port: 9090
-  delay: 8
-  zapScanJobEnabled: false
-  scanMode: "zap-scan"  # Available options: baseline, fullscan, spider
-  targetUrl: "https://example.com"  # The target URL for scanning
-  timeout: 10  # Max time to wait for ZAP to start
-  config: "my_config.txt"  # Configuration file for scan settings
-  removeRules: "" # This will be set dynamically by the backend server
-  Spider_MAX_Duration: 0 # This will be set dynamically by the User
+  zapScanJobEnabled: False
+  scanMode: "zap-scan"
+
   flags:
-    alpha: false
-    list_scans: false
-    ignoreWarnings: false
-    passiveScan: false
-    ajaxSpider: false
-    shortOutput: false
-    removeRules: false
-    Spider_MAX_Duration: false
-    debug: true
+    ENABLE_ALPHA: False
+    ENABLE_IGNORE_WARNINGS: True
+    ENABLE_AJAX_SPIDER: False
+    ENABLE_SHORT_OUTPUT: False
+    ENABLE_PASSIVE_SCAN: False
+    ENABLE_DEBUG: True
+    ENABLE_TARGET_URL: True #Must always be true for scans 
+    ENABLE_SCAN_CONFIG: True 
+    ENABLE_SCAN_TIMEOUT: True 
+    ENABLE_REMOVE: False
+    ENABLE_SPIDER_MAX_DURATION: False
+    ENABLE_PORT: False
+    ENABLE_DELAY: False
+    ENABLE_OUTPUT_FILE_JSON: True
+
+  values:
+    TARGET_URL: "https://example.com"
+    SCAN_CONFIG: "my_config.txt"
+    SCAN_TIMEOUT: 10
+    REMOVE_VALUE: "rule1,rule2"
+    SPIDER_MAX_DURATION: 60
+    PORT_NUMBER: 9090
+    DELAY_TIME: 5
+
 
 
 
