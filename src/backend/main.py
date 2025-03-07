@@ -5,6 +5,7 @@ import os
 import json
 import bedrock_client
 import owasp_client
+import s3_utils
 from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -76,11 +77,11 @@ s3_client = boto3.client("s3", region_name="us-west-2")
 @app.on_event("startup")
 async def startup_event():
     logger.info("Application starting up")
-    
-    # Only run this upload function once
-    if os.getenv("UPLOAD_ONCE", "true") == "true":
-        os.environ["UPLOAD_ONCE"] = "false"  # Prevent duplicate execution
-        owasp_client.upload_files_to_s3("scan_scripts", settings.BUCKET_NAME)
+    logger.info("Creating Directories..")
+    s3_utils.s3_create_directories()
+    logger.info("Coping config files..")
+    s3_utils.upload_files_to_s3("scan_config", settings.BUCKET_NAME)
+   
 
 
 #Testing connection..

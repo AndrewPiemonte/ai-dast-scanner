@@ -80,7 +80,7 @@ spec:
           - name: DELAY_TIME
             value: "{{ .Values.scan_settings.values.DELAY_TIME }}"
           - name: OUTPUT_FILE_JSON
-            value: "{{ .Values.scan_settings.scanMode }}-{{ .Values.job.scanid }}.json"
+            value: "scan-reports/{{ .Values.scan_settings.scanMode }}-{{ .Values.job.scanid }}.json"
         volumeMounts:
         - name: zap-reports
           mountPath: /zap/wrk

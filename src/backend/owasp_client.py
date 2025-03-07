@@ -6,7 +6,7 @@ import logging
 import boto3
 import uuid
 from botocore.exceptions import ClientError
-from scan_scripts.config import SCAN_FLAGS
+from scan_config.config import SCAN_FLAGS
 import os
 import sys
 from fastapi import HTTPException
@@ -35,35 +35,23 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-
-def upload_files_to_s3(local_directory: str, s3_bucket: str, s3_prefix: str = "scan_scripts/"):
+# This function generates S3 keys for storing scan reports and status updates in a consistent format. 
+# Instead of defining these keys in multiple places, we use this function to keep the code organized, 
+# reduce duplication, and make future updates easier. If the S3 key format needs to change, modifying 
+# this function will update all related parts of the code automatically.
+def get_s3_keys(scan_id: str) -> tuple:
     """
-    Uploads all files from the given local directory to the specified S3 bucket.
+    Generates S3 keys for storing the scan report and scan status.
 
     Args:
-        local_directory (str): Path to the local directory containing files to upload.
-        s3_bucket (str): Name of the S3 bucket.
-        s3_prefix (str): S3 prefix (folder path inside the bucket).
-    
-    Raises:
-        Exception: If an error occurs during file upload.
+        scan_id (str): Unique identifier for the scan.
+
+    Returns:
+        tuple: (report_key, status_key)
     """
-    s3_client = boto3.client('s3')
-
-    if not os.path.exists(local_directory):
-        logger.error(f"Local directory {local_directory} does not exist.")
-        return
-
-    for root, _, files in os.walk(local_directory):
-        for file in files:
-            local_path = os.path.join(root, file)
-            s3_key = f"{file}"
-
-            try:
-                s3_client.upload_file(local_path, s3_bucket, s3_key)
-                logger.info(f"Uploaded {local_path} to s3://{s3_bucket}/{s3_key}")
-            except Exception as e:
-                logger.error(f"Failed to upload {local_path} to S3: {e}")
+    report_key = f"scan-reports/zap-scan-{scan_id}.json"
+    status_key = f"scan-status/zap-scan-{scan_id}.json"
+    return report_key, status_key
 
 
 # Remove the running_scans dictionary
@@ -95,11 +83,11 @@ async def start_zap_basescan(scan_mode: str, values: dict, flags: dict):
     timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
     unique_id = str(uuid.uuid4())[:8]  # Use first 8 characters of UUID for brevity
     scan_id = f"{timestamp}-{unique_id}"
-    values_job_name = "zap-basescan-job"
-    release_name = f"zap-basescan-{scan_id}"
+    values_job_name = f"{scan_mode}-job"
+    release_name = f"{scan_mode}-{scan_id}"
     job_name = f"{values_job_name}-{scan_id}"
-    namespace = "default"
-    chart_path = "/app/zap-scan-job"
+    namespace = settings.NAMESPACE
+    chart_path = settings.CHART_PATH
     
     # Verify the chart path exists
     if not os.path.exists(chart_path):
@@ -125,8 +113,9 @@ async def start_zap_basescan(scan_mode: str, values: dict, flags: dict):
         "created_at": datetime.datetime.now().isoformat()
     }
     
+    
     # Upload initial status to S3
-    status_key = f"scan-status/zap-scan-{scan_id}.json"
+    report_key, status_key = get_s3_keys(scan_id)  
     try:
         s3_client.put_object(
             Bucket=BUCKET_NAME,
@@ -207,11 +196,13 @@ async def execute_zap_scan(scan_id: str, scan_mode: str, job_name: str, release_
         helm_settings = {}
 
         for flag, config in SCAN_FLAGS.items():
-            if flags.get(flag, False):  # Only process enabled flags
-                if config["env_var"]:  # If the flag requires a value, get it from `values`
-                    helm_settings[config["env_var"]] = values.get(config["env_var"], "true")
-                else:  # ✅ If it's a standalone flag, set it as "true"
-                    helm_settings[flag] = "true"
+            if flags.get(flag, False):  # ✅ Only process enabled flags
+                # ✅ Update both the flag and its corresponding value
+                helm_settings[f"scan_settings.flags.{flag}"] = "true"
+                
+                if config["env_var"]:  # ✅ If the flag requires a value, update it as well
+                    helm_settings[f"scan_settings.values.{config['env_var']}"] = values.get(config["env_var"], "true")
+
 
         
         # Construct Helm command dynamically
@@ -224,10 +215,9 @@ async def execute_zap_scan(scan_id: str, scan_mode: str, job_name: str, release_
             "--set", f"scan_settings.scanMode={scan_mode}"
         ]
 
-        # ✅ Add dynamically processed values and flags
-        helm_command.extend(
-            [f"--set=scan_settings.values.{key}={value}" for key, value in helm_settings.items()]
-        )
+        # ✅ Add only enabled flags and their corresponding values
+        for key, value in helm_settings.items():
+            helm_command.append(f"--set={key}={value}")
 
         logger.info(f"Executing Helm command: {' '.join(helm_command)}")
         
@@ -289,7 +279,7 @@ async def update_scan_status(scan_id, status, error=None):
     """
     try:
         # First, try to get existing status
-        status_key = f"scan-status/zap-scan-{scan_id}.json"
+        report_key, status_key = get_s3_keys(scan_id)  
         try:
             response = s3_client.get_object(Bucket=BUCKET_NAME, Key=status_key)
             status_data = json.loads(response['Body'].read().decode('utf-8'))
@@ -323,7 +313,8 @@ async def update_scan_status(scan_id, status, error=None):
 async def run_ai_security_analysis(scan_id: str):
     """Triggers AI analysis and updates the report file in S3 with AI results."""
     
-    report_key = f"zap-scan-{scan_id}.json"
+    report_key, status_key = get_s3_keys(scan_id)  
+    #report_key = f"scan-reports/zap-scan-{scan_id}.json"
 
     try:
         # Check if report exists
@@ -399,9 +390,10 @@ async def check_scan_status(scan_id: str):
         None: This function handles all exceptions internally and returns error messages in the response.
     """
 
-    # First, check if the report exists in S3
-    report_key = f"zap-scan-{scan_id}.json"
-    status_key = f"scan-status/zap-scan-{scan_id}.json"
+    report_key, status_key = get_s3_keys(scan_id)  
+    ## First, check if the report exists in S3
+    #report_key = f"scan-reports/zap-scan-{scan_id}.json"
+    #status_key = f"scan-status/zap-scan-{scan_id}.json"
     
     try:
         # Check the status file
@@ -646,7 +638,7 @@ async def wait_for_job_to_complete(job_name: str, namespace: str, scan_id: str):
                 )
                 
                 # Check for successful report generation with correct filename
-                report_filename = f"zap-scan-{scan_id}.json"
+                report_filename = f"scan-reports/zap-scan-{scan_id}.json"
                 if f"Scan completed successfully. Report saved at /zap/wrk/{report_filename}" in logs:
                     logger.info(f"ZAP scan completed and report generated for job '{job_name}'")
                     

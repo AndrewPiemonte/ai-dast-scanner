@@ -1,7 +1,16 @@
 import os
 import subprocess
+import logging
 import json
 from config import SCAN_FLAGS, MANDATORY_ENV_VARS
+
+
+# ✅ Global logger (initialized later in `main()`)
+LOGGER = None
+
+# Configure logging
+LOG_DIR = "/zap/wrk/scan-logs"
+os.makedirs(LOG_DIR, exist_ok=True)
 
 
 def execute_zap_scan():
@@ -18,7 +27,9 @@ def execute_zap_scan():
         result = subprocess.run(command, check=True, capture_output=True, text=True, env=env_vars)
         print("Scan Output:", result.stdout)
 
-        report_path = f"/zap/wrk/{scan_mode}-{scan_id}.json"
+        # Ensure OUTPUT_FILE_JSON is not None and properly joins the path
+        report_filename = os.getenv("OUTPUT_FILE_JSON")  # Provide a default filename
+        report_path = os.path.join("/zap/wrk", report_filename)
         if not os.path.exists(report_path):
             raise FileNotFoundError(f"Scan report not found: {report_path}")
 
@@ -85,18 +96,58 @@ def get_env_var(name, default=None, cast_type=None, scan_id=None):
 
     return value  # Default: return as string
 
+
+def setup_logger():
+    """
+    Configures logging for the scan, creating a separate log file per scan.
+    
+    Returns:
+        logger: Configured logger instance.
+    """
+    scan_id = os.getenv("SCAN_ID")
+    scan_mode = os.getenv("SCAN_MODE")
+
+    if not scan_id:
+        raise ValueError("Missing required environment variable: SCAN_ID")
+
+    if not scan_mode:
+        raise ValueError("Missing required environment variable: SCAN_MODE")
+
+    # ✅ Generate unique log file name
+    log_file = os.path.join(LOG_DIR, f"{scan_id}-{scan_mode}.log")  # Corrected file name
+
+    # ✅ Set up logger
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
+    # Remove existing handlers to prevent duplicates
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
+    # Create file handler (saves logs to file)
+    file_handler = logging.FileHandler(log_file, mode="a")  # Append mode
+    file_handler.setLevel(logging.DEBUG)
+
+    # Create console handler (prints logs to terminal)
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+
+    # Define log format
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+
+    # Attach handlers
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+    logger.info(f"Logging initialized for Scan ID: {scan_id}, Scan Mode: {scan_mode}")
+
+    return logger  # ✅ Return the logger instance
+
 def log_failure(scan_id, error_message, error_type):
     """Log scan failure details to a JSON file with error handling."""
-    
-    log_dir = "/zap/wrk/logs"
-    log_path = f"{log_dir}/{scan_id}-{error_type}.json"
-
-    # Ensure the logs directory exists
-    try:
-        os.makedirs(log_dir, exist_ok=True)
-    except OSError as e:
-        print(f"Error creating log directory '{log_dir}': {e}")
-        return  # If directory creation fails, stop execution
+    global LOGGER
 
     failure_data = {
         "scan_status": error_type,
@@ -104,20 +155,15 @@ def log_failure(scan_id, error_message, error_type):
         "timestamp": scan_id
     }
 
-    # Attempt to write the failure log
     try:
-        with open(log_path, "w") as log_file:
-            json.dump(failure_data, log_file)
+        # ✅ Log structured JSON for machine-readable logs
+        LOGGER.error(json.dumps(failure_data, indent=4))
 
-        # Verify the file was created successfully
-        if not os.path.exists(log_path):
-            print(f"Error: Log file was not created at {log_path}")
-        else:
-            print(f"Failure log saved at {log_path}")
-
-    except (OSError, IOError) as e:
-        print(f"Error writing to log file '{log_path}': {e}")
-
+    except Exception as e:
+        # Fallback in case logging fails (e.g., log file is locked, logger crashes)
+        print(f"Logging failure encountered: {e}")
+        print(f"Scan Failure: {failure_data}")
 
 if __name__ == "__main__":
+    LOGGER = setup_logger()
     execute_zap_scan()
