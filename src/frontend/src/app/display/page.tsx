@@ -31,7 +31,6 @@ export default function Home() {
     const printPDF = (doc: jsPDF, obj:Record<string, any>) => {
         for (let key in obj) {
             if (typeof (obj[key]) === "string") {
-                // console.log(obj[key]);
 
                 if (lineNumber + 10 > pageHeight - 10) {
                     doc.addPage();
@@ -175,7 +174,7 @@ export default function Home() {
                         <>
                                <div className="relative flex h-[350px] w-[500px] flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
                                     <span className="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-black to-gray-300/80 bg-clip-text text-center text-6xl font-semibold leading-none text-transparent dark:from-white dark:to-slate-900/10">
-                                        Fetching
+                                        Starting Test...
                                 </span>
                                 <BorderBeam size={250} duration={12} delay={9} />
                                 <Meteors number={100} />

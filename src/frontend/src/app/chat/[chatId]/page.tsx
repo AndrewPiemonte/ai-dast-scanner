@@ -6,10 +6,8 @@ import { candyWrapperTheme, JsonEditor } from 'json-edit-react';
 import { downloadData } from "aws-amplify/storage";
 import {Schema} from '../../../../amplify/data/resource';
 import { generateClient } from 'aws-amplify/data';
-import "katex/dist/katex.min.css";
 import { Button } from '@/components/ui/button'
 import { useRouter } from "next/navigation";
-import ReactMarkdown from "react-markdown";
 import { formatReport } from "@/utils/format";
 import Markdown from "react-markdown";
 
