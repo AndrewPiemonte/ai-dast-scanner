@@ -11,8 +11,12 @@ import jsPDF from "jspdf";
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource'; // Path to your backend resource definition
 
-
-
+interface ResponseFormat {
+    success: boolean,
+    scan_id: string,
+    status: "failed" | "completed" | "initiated" | "running",
+    message: string
+}
 
 
 export default function Home() {
@@ -27,7 +31,6 @@ export default function Home() {
     const printPDF = (doc: jsPDF, obj:Record<string, any>) => {
         for (let key in obj) {
             if (typeof (obj[key]) === "string") {
-                // console.log(obj[key]);
 
                 if (lineNumber + 10 > pageHeight - 10) {
                     doc.addPage();
@@ -97,11 +100,9 @@ export default function Home() {
 
 
     useEffect(() => {
-
-        const getReport = async (testName: string, value: string) => {
+        const launchTest = async (testName: string, value: string) => {
             console.log('getReport Called')
-
-            const res = await fetch(`/api/getReport`, {
+            const res = await fetch(`/api/launchTest`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -109,59 +110,34 @@ export default function Home() {
                  },
                 body: JSON.stringify({value})
             });
-            let report = ""
             try{
-                let response = await res.json();
+                let response: ResponseFormat = await res.json();
                 console.log("got respose")
                 console.log(response);
-
-                const responseAI = await fetch(`/api/getEnhancedReport`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
-                     },
-                    body: JSON.stringify({response})
-                });
-
-                let summary = await responseAI.json()
-                console.log(summary)
-                response["ai_summary"] = summary.response
                 setJsonData(response);
-                report = JSON.stringify(response)
+                if (!response.success){
+                    setJsonData({error: "Failed to Launch Test",
+                                message: response.message
+                    })
+                } else {
+                    setJsonData({message: response.message,
+                                status: response.status
+                    })
+                }
+                console.log("adding test to dynamo db")
+                const today = new Date().toLocaleString();
+                const test = await client.models.reportInfo.create({
+                    testName: testName,
+                    scan_id: response.scan_id,
+                    testDate: today,
+                    targetURL: value,
+                    type: "basescan",
+                    status: response.status
+                })
             }catch(error){
                 setJsonData({error: "an error occurred"})
                 console.log(error)
             }
-
-          
-
-
-            try{
-                console.log("adding test to dynamo db")
-                const today = new Date().toLocaleString();
-                console.log(today)
-                const test = await client.models.reportInfo.create({
-                    testName: testName,
-                    testDate: today,
-                    targetURL: value,
-                    type: "basescan",
-                    status: "success"
-                })
-
-                console.log(test)
-                let reportName = test?.data?.id
-                console.log('uploading report')
-                uploadData({
-                    path: ({ identityId }) => {
-                        return `reports/${identityId}/${reportName}.json`;
-                      },
-                    data: report
-                })
-            } catch(error){
-                console.log(error)
-            }
-            console.log('setting fetched to true')
             setFetch(true);
         }
 
@@ -174,7 +150,7 @@ export default function Home() {
             console.log('getting report');
             setCalled(true);
             console.log(fetched);
-            getReport(testName, value);
+            launchTest(testName, value);
         }
 
         
@@ -198,7 +174,7 @@ export default function Home() {
                         <>
                                <div className="relative flex h-[350px] w-[500px] flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
                                     <span className="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-black to-gray-300/80 bg-clip-text text-center text-6xl font-semibold leading-none text-transparent dark:from-white dark:to-slate-900/10">
-                                        Fetching
+                                        Starting Test...
                                 </span>
                                 <BorderBeam size={250} duration={12} delay={9} />
                                 <Meteors number={100} />

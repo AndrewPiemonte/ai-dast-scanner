@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Use `export async function POST` for App Router (app/api/ route.ts)
 export async function POST(req: NextRequest) {
-    const baseURL = "http://a36abb63983b6472483debf966e2cafd-698803526.us-west-2.elb.amazonaws.com/bedrock/invoke/chat";
+    const baseURL = process.env.ELB_URL + "bedrock/invoke";
+    console.log(baseURL)
     try {
         // Parse the request body
         const param = await req.json();

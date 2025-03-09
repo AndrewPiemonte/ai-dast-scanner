@@ -85,7 +85,7 @@ export default function ChatComponent({chatId} : {chatId: string}) {
                     })
                     if(newChat){
                         setChat(newChat)
-                        let botMessage = await client.models.Message.create({
+                        await client.models.Message.create({
                             chatId: chatId,
                             content: "Hello, how are you? I can help you with any questions you have with the report",
                             sender: "bot"
@@ -136,6 +136,7 @@ export default function ChatComponent({chatId} : {chatId: string}) {
                 content: newMessage,
                 sender: "user"
             })
+            setChatBotResponding(true);
             setFetchMessages(true);
             const responseAI = await fetch(`/api/getBotResponse`, {
                 method: 'POST',
@@ -145,7 +146,6 @@ export default function ChatComponent({chatId} : {chatId: string}) {
                  },
                 body: JSON.stringify({input_text: newMessage})
             });
-            setChatBotResponding(true)
             try {
                 let {response: chatResponse} = await responseAI.json()
                 console.log(chatResponse)

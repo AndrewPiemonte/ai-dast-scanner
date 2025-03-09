@@ -9,8 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { TestTable } from "./columns"
 import { useRouter } from "next/navigation";
 import { remove } from 'aws-amplify/storage';
-
-
+import { uploadData } from "aws-amplify/storage";
 
 
 export default function Home() {
@@ -37,8 +36,6 @@ export default function Home() {
     }
   }
 
-
-
   function getTests(){
     client.models.reportInfo.observeQuery().subscribe({
       next: (data) => {
@@ -47,6 +44,16 @@ export default function Home() {
       }
     });
   }
+
+  function uploadTest(report: Record<string, any>, reportName: string){
+    uploadData({
+      path: ({ identityId }) => {
+          return `reports/${identityId}/${reportName}.json`;
+        },
+      data: JSON.stringify(report)
+    })
+  }
+
 
   useEffect(()=>{
     getTests()

@@ -3,11 +3,12 @@ import { type ClientSchema, a, defineData } from "@aws-amplify/backend"
 const schema = a.schema({
     reportInfo: a.model({
         id: a.id(),
+        scan_id: a.string(),
         testName: a.string(),
         testDate: a.string(),
         targetURL: a.string(),
         type: a.enum(['basescan', "api"]),
-        status: a.enum(["success", "pending", "failed"])
+        status: a.enum(["initiated", "running", "failed", "completed"])
     }).authorization(allow => [allow.owner()]),
     Chat: a.model({
         id: a.id(),

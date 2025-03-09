@@ -8,6 +8,8 @@ import {Schema} from '../../../../amplify/data/resource';
 import { generateClient } from 'aws-amplify/data';
 import { Button } from '@/components/ui/button'
 import { useRouter } from "next/navigation";
+import { formatReport } from "@/utils/format";
+import Markdown from "react-markdown";
 
 export default function SplitScreen ({params}:{
     params : Promise<{chatId: string}>;
@@ -16,7 +18,7 @@ export default function SplitScreen ({params}:{
     const dashboard = () => {
       router.push("/retrieve")
     }
-    const [data, setData] = useState<Record<string, any>>({loading: "loading report"});
+    const [data, setData] = useState<string>("loading report");
     const [chatId, setChatId] = useState<string>("");
     
     useEffect(()=>{
@@ -30,10 +32,10 @@ export default function SplitScreen ({params}:{
                 }
             }).result;
             let report = await reportFile.body.text();
-            setData(JSON.parse(report))
+            setData(formatReport(JSON.parse(report)))
             } catch(error){
                 console.log(error)
-                setData({error: "report not found"})
+                setData("Error: report not found")
             }
         }
         getReport()
@@ -54,15 +56,9 @@ export default function SplitScreen ({params}:{
             
             <div className="w-800px">
             <Button onClick={dashboard } className="z-10 absolute top-0 left-0 m-2">Back to Dashboard</Button>
-            <JsonEditor className="my-2"
-                    data={data}
-                    theme={candyWrapperTheme}
-                    restrictEdit={true}
-                    restrictDelete={true}
-                    restrictAdd={true}
-                    enableClipboard={true}
-                    minWidth={800}
-                />
+            <div className="my-10">
+                <Markdown>{`${data}`}</Markdown>
+            </div>
             </div>
             </div>
             {/* Right Side - Chat UI */}
