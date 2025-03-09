@@ -11,9 +11,6 @@ export default function Home() {
   const gotoRetirevePage = () => {
     router.push("/retrieve")
   }
-  const goToNewTest = () => {
-    router.push("/newTest")
-  }
   return (
     <div className={styles.background}>
       <div className={styles.page}>
@@ -26,14 +23,8 @@ export default function Home() {
             <div className="flex items-center justify-center">
               <div className="flex h-5 items-center space-x-4 text-sm">
                 <div>
-                  <Button variant="secondary" className="text-lg" onClick={goToNewTest}>
-                    Make a New test Using the Tool
-                  </Button>
-                </div>
-                <Separator orientation="vertical" />
-                <div>
                   <Button variant="secondary" className="text-lg" onClick={gotoRetirevePage}>
-                    Retrive the test Results
+                    Login / Create an Account
                   </Button>
                 </div>
               </div>
