@@ -110,6 +110,7 @@ export default function Home() {
     useEffect(() => {
         const launchTest = async (testName: string, value: string) => {
             console.log('getReport Called')
+            try{
             const res = await fetch(`/api/launchTest`, {
                 method: 'POST',
                 headers: { 
@@ -118,33 +119,33 @@ export default function Home() {
                  },
                 body: JSON.stringify({value})
             });
-            try{
-                let response: ResponseFormat = await res.json();
-                console.log("got respose")
-                console.log(response);
-                if (!response.success){
-                    setDisplayData(
-                        {message: "Could not connect with server",
-                        status: "Status: Failed"
-                        })
-                    return;
-                } else {
-                setDisplayData({
-                    message: response.message,
-                    status: "Status: " + response.status 
-                })
-                }
-                console.log("adding test to dynamo db")
-                const today = new Date().toLocaleString();
-                console.log(response)
-                await client.models.reportInfo.create({
-                    testName: testName,
-                    scan_id: response.scan_id,
-                    testDate: today,
-                    targetURL: value,
-                    type: "basescan",
-                    status: response.status
-                })
+            let response: ResponseFormat = await res.json();
+            console.log("got respose")
+            console.log(response);
+            if (!response.success){
+                setDisplayData(
+                    {message: "Could not connect with server",
+                    status: "Status: Failed"
+                    })
+                    setFetch(true);
+                return;
+            } else {
+            setDisplayData({
+                message: response.message,
+                status: "Status: " + response.status 
+            })
+            }
+            console.log("adding test to dynamo db")
+            const today = new Date().toLocaleString();
+            console.log(response)
+            await client.models.reportInfo.create({
+                testName: testName,
+                scan_id: response.scan_id,
+                testDate: today,
+                targetURL: value,
+                type: "basescan",
+                status: response.status
+            })
             }catch(error){
                 setDisplayData(
                     {message: "An Error Occured",

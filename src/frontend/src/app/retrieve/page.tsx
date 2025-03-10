@@ -1,6 +1,6 @@
 'use client';
 import styles from "../page.module.css";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button"
 import { useAuthenticator } from "@aws-amplify/ui-react";
 import type { Schema } from "../../../amplify/data/resource";
@@ -22,6 +22,7 @@ export default function Home() {
   const client = generateClient<Schema>();
   const router = useRouter();
   const [reports, setReports] = useState<Array<Schema["reportInfo"]["type"]>>([]);
+  const reportsRef = useRef(reports)
   const { signOut } = useAuthenticator();
   const [runTask, setRunTask] = useState<Boolean>(true)
   const newTest = () => {
@@ -53,13 +54,13 @@ export default function Home() {
   async function updateReports(){
     try{
 
-      reports.filter((report) => (report.status == "initiated" || report.status == "running" )).forEach(
+      reportsRef.current.filter((report) => (report.status == "initiated" || report.status == "running" )).forEach(
         async (report) => {
           const res = await fetch(`/api/getEnhancedReport?scan_id=${report.scan_id}`);
           const response: ResponseFormat = await res.json()
           if (response.success){
-    
             if (response.status != report.status){
+              console.log(response)
               const {id, ...reportWithNoID} = structuredClone(report)
               let name: string = id?? ""
               reportWithNoID.status = response.status
@@ -88,8 +89,9 @@ export default function Home() {
     console.log("Executing task at", new Date().toISOString());
 
     try {
-      let nreportsToUpdate = reports.filter((report) => (["initiated", "running"].includes(report.status ?? ""))).length
+      let nreportsToUpdate = reportsRef.current.filter((report) => (["initiated", "running"].includes(report.status ?? ""))).length
       console.log(nreportsToUpdate)
+      console.log("reports: ", reportsRef.current)
        if (nreportsToUpdate > 0){
         console.log("getting updates")
         updateReports()
@@ -110,10 +112,14 @@ export default function Home() {
     })
   }
 
+  useEffect(() => {
+    reportsRef.current = reports;
+  }, [reports]);
+
   useEffect(()=>{
     getTests()
     if (runTask){
-      updateResultsTask;
+      setTimeout(updateResultsTask, 2000);
       setInterval(updateResultsTask, 15000);
       setRunTask(false)
     }

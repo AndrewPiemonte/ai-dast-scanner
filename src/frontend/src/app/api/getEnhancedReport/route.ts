@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Use `export async function POST` for App Router (app/api/ route.ts)
 export async function GET(req: NextRequest) {
-    const baseURL = process.env.ELB_URL + "zap/scan-status/";
+    const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL + "zap/scan-status/";
     try {
         // Parse the request body
         const  { searchParams } = new URL(req.url)

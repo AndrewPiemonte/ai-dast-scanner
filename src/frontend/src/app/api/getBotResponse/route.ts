@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Use `export async function POST` for App Router (app/api/ route.ts)
 export async function POST(req: NextRequest) {
-    const baseURL = process.env.ELB_URL + "bedrock/invoke";
+    const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL + "bedrock/invoke";
     console.log(baseURL)
     try {
         // Parse the request body

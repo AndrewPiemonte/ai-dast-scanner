@@ -8,7 +8,7 @@ interface ResponseFormat {
 
 // Use `export async function POST` for App Router (app/api/ route.ts)
 export async function POST(req: NextRequest) {
-    const baseURL = process.env.ELB_URL + "zap/basescan/";
+    const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL + "zap/basescan/";
     try {
         // Parse the request body
         const val = await req.json();
