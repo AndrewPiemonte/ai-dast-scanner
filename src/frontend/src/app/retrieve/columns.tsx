@@ -12,9 +12,6 @@ export const TestTable = ({data, deleteItem} : {
     deleteItem: (id: any) => Promise<void>;
      } ) => {
     const [tableData, setTableData] = useState<Array<Schema["reportInfo"]["type"]>>(data);
-    console.log(data)
-    console.log(tableData)
-    console.log("testtable")
 
     useEffect(()=>{
         try{
@@ -34,9 +31,12 @@ export const TestTable = ({data, deleteItem} : {
                 const test = row.original;
                  let path = `/chat/${test.id}`
                 return (
+                    test.status == "completed" ?
                   <Link href={path} className="text-blue-500 hover:underline">
                     {test.testName}
                   </Link>
+                  :
+                <p>{test.testName}</p>
                 );
             }
         },

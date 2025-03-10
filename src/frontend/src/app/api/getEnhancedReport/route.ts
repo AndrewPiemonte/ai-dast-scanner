@@ -2,28 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 
 
 // Use `export async function POST` for App Router (app/api/ route.ts)
-export async function POST(req: NextRequest) {
-    const baseURL = process.env.ELB_URL + "bedrock/invoke/report";
+export async function GET(req: NextRequest) {
+    const baseURL = process.env.ELB_URL + "zap/scan-status/";
     try {
         // Parse the request body
-        const param = await req.json();
+        const  { searchParams } = new URL(req.url)
+        const scanId = searchParams.get("scan_id");
         console.log("just got prompt")
-        console.log(param)
+        console.log(scanId)
+
+        if (!scanId) {
+            return NextResponse.json({ status: "failed", report:"Scan ID is required" }, { status: 400 });
+        }
 
         // Make the POST request from the backend 
-        const botResponse = await fetch(`${baseURL}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(param)
-        });
+        const res = await fetch(`${baseURL}${scanId}`);
 
-        const responseText = await botResponse.json();
-        console.log(responseText)
+        const responseText = await res.json();
 
-        return NextResponse.json({ success: true, response: responseText });
+        return NextResponse.json({ success: true, report: responseText, status: responseText.status, message: responseText.message });
     } catch (error) {
-        return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+        return NextResponse.json({ success: false, report: (error as Error).message }, { status: 500 });
     }
 }
