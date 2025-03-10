@@ -7,9 +7,12 @@ import {JSONTree} from "react-json-tree";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import PulsatingButton from "@/components/ui/pulsating-button";
 import { uploadData } from "@aws-amplify/storage";
+import { useRouter } from "next/navigation"; 
 import jsPDF from "jspdf";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../amplify/data/resource'; // Path to your backend resource definition
+import {Button} from "@/components/ui/button"
 
 interface ResponseFormat {
     success: boolean,
@@ -18,13 +21,22 @@ interface ResponseFormat {
     message: string
 }
 
+interface DisplayFormat {
+    status: string,
+    message: string
+}
+
 
 export default function Home() {
+    const router = useRouter()
+    const dashboard = () => {
+      router.push("/retrieve")
+    }
     console.log('home called')
     const client = generateClient<Schema>();
     const [called, setCalled] = useState(false);
     const [fetched, setFetch] = useState(false);
-    const [jsonData, setJsonData] = useState<Record<string, any> | null>(null);
+    const [displayData, setDisplayData] = useState<DisplayFormat>({status: "No Test Has been Launched",message: "Please go back to the Dashboard and Create a new Test"});
     let pageHeight = 0;
     let lineNumber = 10;
 
@@ -79,10 +91,6 @@ export default function Home() {
         pageHeight = doc.internal.pageSize.height;
         doc.setFontSize(12);
         
-        if (jsonData != null){
-            printPDF(doc, jsonData);
-        }
-
         const pdfBlob = doc.output("blob");
 
         // Create a URL for the Blob
@@ -114,19 +122,22 @@ export default function Home() {
                 let response: ResponseFormat = await res.json();
                 console.log("got respose")
                 console.log(response);
-                setJsonData(response);
                 if (!response.success){
-                    setJsonData({error: "Failed to Launch Test",
-                                message: response.message
-                    })
+                    setDisplayData(
+                        {message: "Could not connect with server",
+                        status: "Status: Failed"
+                        })
+                    return;
                 } else {
-                    setJsonData({message: response.message,
-                                status: response.status
-                    })
+                setDisplayData({
+                    message: response.message,
+                    status: "Status: " + response.status 
+                })
                 }
                 console.log("adding test to dynamo db")
                 const today = new Date().toLocaleString();
-                const test = await client.models.reportInfo.create({
+                console.log(response)
+                await client.models.reportInfo.create({
                     testName: testName,
                     scan_id: response.scan_id,
                     testDate: today,
@@ -135,7 +146,10 @@ export default function Home() {
                     status: response.status
                 })
             }catch(error){
-                setJsonData({error: "an error occurred"})
+                setDisplayData(
+                    {message: "An Error Occured",
+                    status: "Status: Failed"
+                    })
                 console.log(error)
             }
             setFetch(true);
@@ -162,19 +176,25 @@ export default function Home() {
                 <main className={styles.main}>
                     {fetched ?
                         <>
-                            <div className="flex h-[500px] w-[1000px] flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
-                                <h2> Results have been received</h2>
-                                <ScrollArea className="h-500px w-1000px rounded-md border">
-                                    <JSONTree data = {jsonData} shouldExpandNodeInitially={() => true} />
-                                </ScrollArea>
-                            </div>
-                            <PulsatingButton onClick={downloadPdf}>Download the PDF report</PulsatingButton>
+                            <Card className="mx-auto max-w-sm p-4">
+                                    <CardTitle className="text-3xl text-center p-2">
+                                        {displayData.message}
+                                    </CardTitle>
+                                <CardContent>
+                                    <p className= "text-2xl">
+                                        {displayData.status}
+                                    </p>
+                                    <Button onClick={dashboard} className="mt-6 w-full p-4 text-lg">
+                                        Back to Dashboard
+                                    </Button>
+                                </CardContent>
+                            </Card>
                         </>
                         :
                         <>
                                <div className="relative flex h-[350px] w-[500px] flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl">
                                     <span className="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-black to-gray-300/80 bg-clip-text text-center text-6xl font-semibold leading-none text-transparent dark:from-white dark:to-slate-900/10">
-                                        Starting Test...
+                                        Starting Test
                                 </span>
                                 <BorderBeam size={250} duration={12} delay={9} />
                                 <Meteors number={100} />

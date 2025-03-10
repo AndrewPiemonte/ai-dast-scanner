@@ -17,26 +17,9 @@ interface Message {
     isLoading?: boolean;
 }
 
-const messages: Message[] = [
-    {
-        id: 0,
-        message: 'Hello, how has your day been? I can help you with any questions you have with the report',
-        sender: 'bot',
-        isLoading: false
-    },
-    {
-        id: 1,
-        message: 'What strategies can I use to further secure my app given the report has been generated',
-        sender: 'user',
-        isLoading: false
-    }
-];
-
-
-export default function ChatComponent({chatId} : {chatId: string}) {
+export default function ChatComponent({chatId, report} : {chatId: string, report: Record<string, any>}) {
     const [chat, setChat] = useState<Schema["Chat"]["type"]>()
     const [hasChat, sethasChat] = useState<boolean>(false);
-    const [newMessages, setMessages] = useState<Message[]>(messages);
     const [isMessageCompleted, setMessageCompleted] = useState<Boolean>(true);
     const client = generateClient<Schema>();
     const [hasNewMessage, setHasNewMessage] = useState<Boolean>(false);
@@ -47,9 +30,6 @@ export default function ChatComponent({chatId} : {chatId: string}) {
 
 
     const submitButtonEvent = (message: string, event: React.FormEvent<HTMLFormElement>) => {
-        console.log("message is", message)
-        let messageLength = newMessages.length;
-        let obj = newMessages[messageLength - 1];
         if (hasNewMessage) {
             setMessageCompleted(false);
             setTimeout(() => {
@@ -144,7 +124,11 @@ export default function ChatComponent({chatId} : {chatId: string}) {
                     'Content-Type': 'application/json',
                     'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
                  },
-                body: JSON.stringify({input_text: newMessage})
+                body: JSON.stringify({
+                    mode: "chat",
+                    input_text: newMessage,
+                    input_report: JSON.stringify(report)
+                })
             });
             try {
                 let {response: chatResponse} = await responseAI.json()

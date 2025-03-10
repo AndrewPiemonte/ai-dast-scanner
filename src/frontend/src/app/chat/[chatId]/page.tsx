@@ -4,8 +4,6 @@ import React, { useState, useEffect } from "react";
 import ChatComponent from "./chatUI"; // Your AI Chat UI component
 import { candyWrapperTheme, JsonEditor } from 'json-edit-react';
 import { downloadData } from "aws-amplify/storage";
-import {Schema} from '../../../../amplify/data/resource';
-import { generateClient } from 'aws-amplify/data';
 import { Button } from '@/components/ui/button'
 import { useRouter } from "next/navigation";
 import { formatReport } from "@/utils/format";
@@ -19,6 +17,7 @@ export default function SplitScreen ({params}:{
       router.push("/retrieve")
     }
     const [data, setData] = useState<string>("loading report");
+    const [jsonReport, setJsonReport] = useState<Record<string, any>>({report: "no report"})
     const [chatId, setChatId] = useState<string>("");
     
     useEffect(()=>{
@@ -32,7 +31,9 @@ export default function SplitScreen ({params}:{
                 }
             }).result;
             let report = await reportFile.body.text();
-            setData(formatReport(JSON.parse(report)))
+            let jsonReport = JSON.parse(report)
+            setJsonReport(jsonReport)
+            setData(formatReport(jsonReport))
             } catch(error){
                 console.log(error)
                 setData("Error: report not found")
@@ -63,7 +64,7 @@ export default function SplitScreen ({params}:{
             </div>
             {/* Right Side - Chat UI */}
             <div className="w-1/2 h-full overflow-y-auto border-r p-4">
-                <ChatComponent chatId={chatId} />
+                <ChatComponent chatId={chatId} report={jsonReport} />
             </div>
         </div>
     );

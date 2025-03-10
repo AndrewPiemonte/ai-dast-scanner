@@ -11,26 +11,31 @@ import { useRouter } from "next/navigation";
 import { remove } from 'aws-amplify/storage';
 import { uploadData } from "aws-amplify/storage";
 
+interface ResponseFormat {
+    success: boolean,
+    report: Record<string, any>,
+    status: "initiated" | "running" | "failed" | "completed",
+    message: string
+}
 
 export default function Home() {
   const client = generateClient<Schema>();
   const router = useRouter();
   const [reports, setReports] = useState<Array<Schema["reportInfo"]["type"]>>([]);
   const { signOut } = useAuthenticator();
+  const [runTask, setRunTask] = useState<Boolean>(true)
   const newTest = () => {
     router.push("/newTest")
   }
 
   async function deleteReport(reportId: string){
     try{
-      await console.log(reportId)
       remove({
-        path: ({identityId}) => `reports/${identityId}/${reportId}.txt`
+        path: ({identityId}) => `reports/${identityId}/${reportId}.json`
       });
       await client.models.reportInfo.delete({
         id: reportId
       });
-
     }catch(error){
       console.log(error)
     }
@@ -40,10 +45,61 @@ export default function Home() {
     client.models.reportInfo.observeQuery().subscribe({
       next: (data) => {
         setReports([...data.items].sort((a, b) => 
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()))
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()))
       }
     });
   }
+
+  async function updateReports(){
+    try{
+
+      reports.filter((report) => (report.status == "initiated" || report.status == "running" )).forEach(
+        async (report) => {
+          const res = await fetch(`/api/getEnhancedReport?scan_id=${report.scan_id}`);
+          const response: ResponseFormat = await res.json()
+          if (response.success){
+    
+            if (response.status != report.status){
+              const {id, ...reportWithNoID} = structuredClone(report)
+              let name: string = id?? ""
+              reportWithNoID.status = response.status
+              await client.models.reportInfo.update({
+                id: name,
+                scan_id: report.scan_id,
+                status: response.status,
+                targetURL: report.targetURL,
+                testDate: report.testDate,
+                type: report.type
+              })
+    
+            if (response.status == "completed"){
+              uploadTest(response.report, name)
+            } 
+            }
+          }
+      }
+    );
+    } catch(error){
+      console.log(error)
+    }
+  }
+
+  async function updateResultsTask() {
+    console.log("Executing task at", new Date().toISOString());
+
+    try {
+      let nreportsToUpdate = reports.filter((report) => (["initiated", "running"].includes(report.status ?? ""))).length
+      console.log(nreportsToUpdate)
+       if (nreportsToUpdate > 0){
+        console.log("getting updates")
+        updateReports()
+       }
+    } catch (error) {
+        console.error("Task failed:", error);
+    }
+  }
+
+  // Start task to update results
 
   function uploadTest(report: Record<string, any>, reportName: string){
     uploadData({
@@ -54,12 +110,17 @@ export default function Home() {
     })
   }
 
-
   useEffect(()=>{
     getTests()
+    if (runTask){
+      updateResultsTask;
+      setInterval(updateResultsTask, 15000);
+      setRunTask(false)
+    }
   }, []);
 
   console.log("retrive page called");
+
 
 
   return (
@@ -79,9 +140,9 @@ export default function Home() {
           <div className="m-8 bg-white bg-opacity-60 rounded-md">
           <Button className="bg-green-500 hover:bg-green-600 text-white m-4 text-lg" onClick={newTest}>
             New Test
-          </Button>  
-          <ScrollArea className=" w-700px ">
-            <TestTable data={reports} deleteItem={deleteReport} />
+          </Button>
+          <ScrollArea className=" h-[500px] w-full">
+          <TestTable data={reports} deleteItem={deleteReport} />
           </ScrollArea>
           </div>
         </div>

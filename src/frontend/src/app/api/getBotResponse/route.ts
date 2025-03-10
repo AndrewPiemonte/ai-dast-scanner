@@ -8,7 +8,6 @@ export async function POST(req: NextRequest) {
     try {
         // Parse the request body
         const param = await req.json();
-        console.log("just got prompt")
         console.log(param)
 
         // Make the POST request from the backend 
@@ -23,7 +22,7 @@ export async function POST(req: NextRequest) {
         const responseText = await botResponse.json();
         console.log(responseText)
 
-        return NextResponse.json({ success: true, response: responseText });
+        return NextResponse.json({ success: true, response: responseText.response });
     } catch (error) {
         return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
     }
