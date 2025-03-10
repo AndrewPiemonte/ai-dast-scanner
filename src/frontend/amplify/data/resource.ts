@@ -8,7 +8,7 @@ const schema = a.schema({
         testDate: a.string(),
         targetURL: a.string(),
         type: a.enum(['basescan', "api"]),
-        status: a.enum(["initiated", "running", "failed", "completed"])
+        status: a.enum(["initiated", "running", "processing", "failed", "completed"])
     }).authorization(allow => [allow.owner()]),
     Chat: a.model({
         id: a.id(),

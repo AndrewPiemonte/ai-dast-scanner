@@ -17,7 +17,7 @@ import {Button} from "@/components/ui/button"
 interface ResponseFormat {
     success: boolean,
     scan_id: string,
-    status: "failed" | "completed" | "initiated" | "running",
+    status: "failed" | "completed" | "initiated" | "processing" | "running",
     message: string
 }
 
@@ -177,8 +177,8 @@ export default function Home() {
                 <main className={styles.main}>
                     {fetched ?
                         <>
-                            <Card className="mx-auto max-w-sm p-4">
-                                    <CardTitle className="text-3xl text-center p-2">
+                            <Card className="mx-auto max-w-md p-4">
+                                    <CardTitle className="text-3xl text-center py-3">
                                         {displayData.message}
                                     </CardTitle>
                                 <CardContent>

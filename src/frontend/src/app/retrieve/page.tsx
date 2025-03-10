@@ -14,7 +14,7 @@ import { uploadData } from "aws-amplify/storage";
 interface ResponseFormat {
     success: boolean,
     report: Record<string, any>,
-    status: "initiated" | "running" | "failed" | "completed",
+    status: "initiated" | "running" | "failed" | "processing" | "completed",
     message: string
 }
 
@@ -54,7 +54,8 @@ export default function Home() {
   async function updateReports(){
     try{
 
-      reportsRef.current.filter((report) => (report.status == "initiated" || report.status == "running" )).forEach(
+      reportsRef.current.filter((report) => (report.status == "initiated" || report.status == "running" 
+        ||  report.status == "processing")).forEach(
         async (report) => {
           const res = await fetch(`/api/getEnhancedReport?scan_id=${report.scan_id}`);
           const response: ResponseFormat = await res.json()
@@ -89,7 +90,7 @@ export default function Home() {
     console.log("Executing task at", new Date().toISOString());
 
     try {
-      let nreportsToUpdate = reportsRef.current.filter((report) => (["initiated", "running"].includes(report.status ?? ""))).length
+      let nreportsToUpdate = reportsRef.current.filter((report) => (["initiated", "running", "processing"].includes(report.status ?? ""))).length
       console.log(nreportsToUpdate)
       console.log("reports: ", reportsRef.current)
        if (nreportsToUpdate > 0){
