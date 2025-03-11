@@ -19,8 +19,12 @@ export async function GET(req: NextRequest) {
         const res = await fetch(`${baseURL}${scanId}`);
 
         const responseText = await res.json();
-
-        return NextResponse.json({ success: true, report: responseText, status: responseText.status, message: responseText.message });
+        console.log(responseText)
+        if (responseText.report){
+            return NextResponse.json({ success: true, report: JSON.stringify(responseText.report), status: responseText.status, message: responseText.message });
+        } else{
+            return NextResponse.json({ success: true, report: "", status: responseText.status, message: responseText.message});
+        }
     } catch (error) {
         return NextResponse.json({ success: false, report: (error as Error).message }, { status: 500 });
     }

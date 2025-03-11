@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react";
 import { DataTable } from "./data-table";
 import type { Schema } from "../../../amplify/data/resource";
+import { ClipLoader } from "react-spinners"
 
 
 export const TestTable = ({data, deleteItem} : { 
@@ -54,7 +55,27 @@ export const TestTable = ({data, deleteItem} : {
         },
         {
             accessorKey: "status",
-            header: "Status"
+            header: "Status",
+            cell: ({row}) =>{
+                const test = row.original;
+                if (["initiated", "running", "processing"].includes(test.status ?? "")){
+                    return (
+                    <div className="flex flex-row flex-wrap items-center">
+                    <div className="mx-2 text-yellow-600">{test.status}</div>
+                    <ClipLoader color="#ca8a04" size={20} />
+                    </div>
+                    );
+                }
+                return(
+                    test.status == "completed" ?
+                    <div className="mx-2 text-green-600">{test.status}</div>
+                    :
+                    <div className="mx-2 text-red-600">{test.status}</div>
+                )
+
+
+                
+            }
         },
         {
             id: "actions",

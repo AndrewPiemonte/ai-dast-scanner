@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button'
 import { useRouter } from "next/navigation";
 import { formatReport } from "@/utils/format";
 import Markdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import remarkGfm from 'remark-gfm';
+import "./table.css";
 
 export default function SplitScreen ({params}:{
     params : Promise<{chatId: string}>;
@@ -25,11 +28,17 @@ export default function SplitScreen ({params}:{
             try{
             const id = (await params).chatId;
             setChatId(id)
-            const reportFile = await downloadData({
+            let reportFile: Record<string, any>
+            try{
+            reportFile = await downloadData({
                 path: ({identityId}) => {
                     return `reports/${identityId}/${id}.json`
                 }
             }).result;
+            } catch(error){
+                reportFile = {error: "Could not load test"}
+                console.log(error)
+            }
             let report = await reportFile.body.text();
             let jsonReport = JSON.parse(report)
             setJsonReport(jsonReport)
@@ -41,7 +50,10 @@ export default function SplitScreen ({params}:{
         }
         getReport()
     }, [])
-    
+    const markdownContent = `
+# Report:
+| 🔧 Configurations 🔧 | \n |---| \n | **@ssl:**  \`true\` | \n | **@auth:** \`enabled\` | \n | **@port:** \`443\` |`;
+
 
 
     return (
@@ -58,7 +70,11 @@ export default function SplitScreen ({params}:{
             <div className="w-800px">
             <Button onClick={dashboard } className="z-10 absolute top-0 left-0 m-2">Back to Dashboard</Button>
             <div className="my-10">
-                <Markdown>{`${data}`}</Markdown>
+            <div  className="times"> 
+                <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} >
+                    {data}
+                </Markdown>
+                </div> 
             </div>
             </div>
             </div>

@@ -13,7 +13,7 @@ import { uploadData } from "aws-amplify/storage";
 
 interface ResponseFormat {
     success: boolean,
-    report: Record<string, any>,
+    report: string,
     status: "initiated" | "running" | "failed" | "processing" | "completed",
     message: string
 }
@@ -62,9 +62,12 @@ export default function Home() {
           if (response.success){
             if (response.status != report.status){
               console.log(response)
-              const {id, ...reportWithNoID} = structuredClone(report)
-              let name: string = id?? ""
-              reportWithNoID.status = response.status
+              let name: string = report.id?? ""
+              if (response.status == "completed"){
+                console.log("uploading report")
+                uploadTest(response.report, name)
+              } 
+
               await client.models.reportInfo.update({
                 id: name,
                 scan_id: report.scan_id,
@@ -73,10 +76,6 @@ export default function Home() {
                 testDate: report.testDate,
                 type: report.type
               })
-    
-            if (response.status == "completed"){
-              uploadTest(response.report, name)
-            } 
             }
           }
       }
@@ -104,13 +103,14 @@ export default function Home() {
 
   // Start task to update results
 
-  function uploadTest(report: Record<string, any>, reportName: string){
-    uploadData({
+  async function uploadTest(report: string, reportName: string){
+    let {result} = uploadData({
       path: ({ identityId }) => {
           return `reports/${identityId}/${reportName}.json`;
         },
-      data: JSON.stringify(report)
+      data: report
     })
+    console.log(result)
   }
 
   useEffect(() => {

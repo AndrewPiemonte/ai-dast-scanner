@@ -39,6 +39,9 @@
     "react-latex-next": "^3.0.0",
     "react-markdown": "^10.1.0",
     "react-oidc-context": "^3.2.0",
+    "react-spinners": "^0.15.0",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.1"
