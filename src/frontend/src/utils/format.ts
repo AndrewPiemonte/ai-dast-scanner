@@ -1,31 +1,74 @@
 import { constants } from "buffer";
 import { config } from "process";
+import { isArrayOfJsons, isJsonObject, isString } from "./check";
 
 export function formatReport(report: Record<string, any>) : string{
-  let markdown: String = "# Security Test Report \n\n";
+  let markdown: String = "";
   console.log(report)
   let {ai_analysis, ...zap_report} = report
   if(typeof ai_analysis?.response === "string"){
-  markdown += "## AI Summary: \n\n"
-  markdown += report.ai_analysis.response.replaceAll("**Vulnerability Name:**", "####")
+    console.log("has ai analysis")
+    markdown += "## AI Summary: \n\n"
+    markdown += report.ai_analysis.response.replaceAll("**Vulnerability Name:**", "####")
   }
-  let reportContent = `
-## Report:
-|  DAST Test Information |
-|---| \n`;
-
-  let configurations: Record<string, any> = extractconfigurations(report)
-  console.log(configurations)
-  for (const [key, value] of Object.entries(configurations)){
-    reportContent += ` | **${key}:** \`${value}\` | \n`
-  }
-  markdown += reportContent;
+  console.log(typeof ai_analysis?.response)
+  markdown += `\n\n ## Report \n\n`;
   console.log("zap report", zap_report)
-  let sections = {
-    text: " "
+  let configurations = extractconfigurations(report)
+  if (Object.keys(configurations).length > 0){
+    markdown +=` 
+| DAST Test Configurations | 
+|---| \n`;
+    
+    for(const [key, value] of Object.entries(configurations)){
+      markdown += `| **${key}:** \`${value}\` | \n`
+    }
+    markdown += "\n\n <br/> \n\n"
   }
-  formatChildren(sections, zap_report)
-  markdown += sections.text
+ 
+  // Create a table of the alerts of each site
+  if(isArrayOfJsons(zap_report?.site)){
+    let  sites = zap_report.site
+    for( let i=0; i < sites.length; i++){
+      let site =  sites[i]
+      let configurations: Record<string, any> = extractconfigurations(site)
+      if (Object.keys(configurations).length > 0){
+        markdown +=` 
+| Site General Information | 
+|---| \n`;
+        for(const [key, value] of Object.entries(configurations)){
+          markdown += `| **${key}:** \`${value}\` | \n`
+        }
+        markdown += "\n\n <br/> \n\n"
+      }
+      let alerts = site?.alerts
+      if (!isArrayOfJsons(alerts)){
+        continue;
+      }
+      markdown +=`
+| Name | Impact |
+|---|---| \n`;
+      for(const [key, value] of Object.entries(alerts)){
+        if (isJsonObject(value)){
+        if(isString(value?.name) && isString(value?.desc)){
+          if (isString(value?.solution) && isString(value?.riskdesc) && isString(value?.reference)){
+            markdown += ` | **${value.name}** <br/> Risk: ${value.riskdesc}  | ${formatPara(value.desc)}  **Possible Solution:** ${formatPara(value.solution)} **References:** ${formatPara(value.reference)} | \n`
+          }else{
+            markdown += ` | **${value.name}** | \`${formatPara(value.desc)}\` | \n`
+          }
+        }
+        }
+      }
+      markdown += ` <br>\n\n `
+    }
+   } else{
+      let sections = {
+        text: " "
+      }
+      formatChildren(3, sections, zap_report)
+      markdown += sections.text
+    }
+    
   return markdown.toString();
 };
 
@@ -51,19 +94,16 @@ function valueWithoutConfigurations(report: Record<string, any>): Record<string,
     }, {});
 }
 
-function isArrayOfJsons(value: any): value is Record<string, any>[] {
-  return (
-    Array.isArray(value) && 
-    value.every(item => typeof item === "object" && item !== null && !Array.isArray(item))
-  );
+function getHeading(level: number): string {
+  return "#".repeat(Math.min(level, 6)); // Repeat "#" but cap at 6
 }
 
-function isJsonObject(value: any): value is Record<string, any> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function formatPara(value: string): string {
+  return value.replaceAll("<p>","<p>\`").replaceAll("</p>","\`</p>")
 }
 
 
-function formatChildren(sections:{text: String}, child: Record<string, any>){
+function formatChildren(level: number, sections:{text: String}, child: Record<string, any>){
   let configurations: Record<string, any> = extractconfigurations(child)
   if (Object.keys(configurations).length > 0){
      sections.text +=`
@@ -72,23 +112,23 @@ function formatChildren(sections:{text: String}, child: Record<string, any>){
     for(const [key, value] of Object.entries(configurations)){
        sections.text += ` | **${key}:** \`${value}\` | \n`
     }
-    formatChildren(sections, valueWithoutConfigurations(child));
+    formatChildren(level, sections, valueWithoutConfigurations(child));
   } else{
   for (const [key, value] of Object.entries(child)) {
     if (Array.isArray(value)){
-      sections.text += `### \`${key}\` \n\n`
+      sections.text += `${getHeading(level)} \`${key}\` \n\n`
       for( let i=0; i < value.length; i++){
         if (isJsonObject(value[i])){
-          formatChildren(sections, value[i])
+          formatChildren(level + 1, sections, value[i])
         }
         sections.text += ` <br>\n\n `
       }
     } else if (isJsonObject(value)) {
-        sections.text += `### ${key}\n\n `;
-        formatChildren(sections, value)
+        sections.text += `${getHeading(level)} ${key}\n\n `;
+        formatChildren(level + 1, sections, value)
       }  else if (value != null) {
         if (typeof value === "string" && value !== ""){
-          sections.text += `- **${key}:** \`${value.replaceAll("<p>", "").replaceAll("</p>", "")}\` \n\n `;
+          sections.text += `**${key}:** \`${value.replaceAll("<p>", "").replaceAll("</p>", "")}\` \n\n `;
         } 
       }
   }
