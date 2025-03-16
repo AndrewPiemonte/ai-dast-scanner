@@ -1,25 +1,12 @@
-import boto3
 import os
 import hashlib
-import logging
-from config import settings
+from config.settings import settings
+from app_resources import s3_client, logger
 from botocore.exceptions import ClientError
 
-# Configure logging
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
-
-
-# List of files to ignore (add filenames or patterns)
-IGNORE_FILES = {"__init__.py", ".DS_Store"}  # Example files
-IGNORE_EXTENSIONS = {".pyc", ".log",".md" }  # Example extensions to ignore
-
-# Define directories to be created
-DIRECTORIES_TO_CREATE = [
-    "scan-status/",
-    "scan-reports/",
-    "scan-logs/",
-]
+IGNORE_FILES = settings.IGNORE_FILES
+IGNORE_EXTENSIONS = settings.IGNORE_EXTENSIONS
+DIRECTORIES_TO_CREATE = settings.DIRECTORIES_TO_CREATE
 
 def calculate_md5(file_path):
     """Calculate the MD5 hash of a local file."""
@@ -40,35 +27,35 @@ def get_s3_file_etag(s3_client, bucket, key):
         logger.error(f"Error checking {key} in S3: {e}")
         return None  # Handle other errors gracefully
 
-def upload_files_to_s3(local_directory: str, s3_bucket: str, s3_prefix: str = "scan_scripts/"):
+def upload_files_to_s3(local_directory: str, s3_bucket: str, s3_prefix: str = ""):
     """
-    Uploads all files from the given local directory to the specified S3 bucket.
+    Recursively uploads all files and folders from the given local directory to the specified S3 bucket,
+    preserving the folder structure.
+
     If a file already exists in S3 with the same content (MD5 match), it is skipped.
 
     Args:
         local_directory (str): Path to the local directory containing files to upload.
         s3_bucket (str): Name of the S3 bucket.
-        s3_prefix (str): S3 prefix (folder path inside the bucket).
+        s3_prefix (str): S3 prefix (folder path inside the bucket). Defaults to root.
 
     Raises:
         Exception: If an error occurs during file upload.
     """
-    s3_client = boto3.client('s3')
-
     if not os.path.exists(local_directory):
         logger.error(f"Local directory {local_directory} does not exist.")
         return
 
     for root, _, files in os.walk(local_directory):
         for file in files:
-
             # Skip ignored files
             if file in IGNORE_FILES or any(file.endswith(ext) for ext in IGNORE_EXTENSIONS):
-                logger.info(f"INGORE: {file}: in ignore list.")
+                logger.info(f"IGNORED: {file}: in ignore list.")
                 continue
 
             local_path = os.path.join(root, file)
-            s3_key = f"{file}"  # Store file at the specified prefix in S3
+            relative_path = os.path.relpath(local_path, local_directory)  # Preserve folder structure
+            s3_key = os.path.join(s3_prefix, relative_path).replace("\\", "/")  # Ensure S3 key uses "/"
 
             # Compute MD5 hash of the local file
             local_md5 = calculate_md5(local_path)
@@ -78,15 +65,16 @@ def upload_files_to_s3(local_directory: str, s3_bucket: str, s3_prefix: str = "s
 
             # Skip upload if hashes match (same file content)
             if s3_etag and s3_etag == local_md5:
-                logger.info(f"UP-TO-DATE: {file}: already up-to-date in s3://{s3_bucket}/{s3_key}")
+                logger.info(f"UP-TO-DATE: {relative_path} already up-to-date in s3://{s3_bucket}/{s3_key}")
                 continue
 
             # Upload the file if it does not exist or has changed
             try:
                 s3_client.upload_file(local_path, s3_bucket, s3_key)
-                logger.info(f"UPLOADED: Uploaded {local_path} to s3://{s3_bucket}/{s3_key}")
+                logger.info(f"UPLOADED: {relative_path} to s3://{s3_bucket}/{s3_key}")
             except Exception as e:
-                logger.error(f"FAILED: Failed to upload {local_path} to S3: {e}")
+                logger.error(f"FAILED: Failed to upload {relative_path} to S3: {e}")
+
 
 def s3_create_directories():
     """
@@ -95,7 +83,6 @@ def s3_create_directories():
     Returns:
         dict: Status report for each directory (created or already exists).
     """
-    s3_client = boto3.client("s3")
     status = {}
 
     for directory in DIRECTORIES_TO_CREATE:
