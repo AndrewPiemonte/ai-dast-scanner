@@ -52,10 +52,59 @@ export function formatReport(report: Record<string, any>) : string{
         if (isJsonObject(value)){
         if(isString(value?.name) && isString(value?.desc)){
           if (isString(value?.solution) && isString(value?.riskdesc) && isString(value?.reference)){
-            markdown += ` | **${value.name}** <br/> Risk: ${value.riskdesc}  | ${formatPara(value.desc)}  **Possible Solution:** ${formatPara(value.solution)} **References:** ${formatPara(value.reference)} | \n`
+            // markdown += ` | **${value.name}** <br/> Risk: ${value.riskdesc}  | ${formatPara(value.desc)}  **Possible Solution:** ${formatPara(value.solution)} **References:** ${formatPara(value.reference)} | \n`
+            markdown += ` | **${value.name}** <br/> Risk: ${value.riskdesc}  | ${formatPara(value.desc)}  **Possible Solution:** ${formatPara(value.solution)} **References:** ${formatPara(value.reference)}`
+            markdown += `<br/> **Information Regarding the Instances**`
+            markdown += `<br/>`
+            for(const [key1, value1] of Object.entries(value.instances)){
+              let instanceID = Number(key1) + 1
+              markdown += `<details> <summary>`
+              markdown += `Instance ${instanceID}`
+              markdown += `</summary>`
+              markdown += `<ul>`
+              if(value1.id != "") {
+                markdown += `<li> Risk id - ${value1.id} </li>`
+              }
+              if(value1.method != "") {
+                markdown += `<li> method - ${value1.method} </li>`
+              }
+              if(value1.uri != "") {
+                markdown += ` <li> uri - ${value1.uri} </li>`
+              }
+              if(value1.param != "") {
+                markdown += `<li> Risk param - ${value1.param} </li>`
+              }
+              if(value1.attack != "") {
+                markdown += `<li> Attack - ${value1.attack} </li>`
+              }
+              if(value1.evidence != "") {
+                markdown += `<li> Risk evidence - ${value1.evidence} </li>`
+              }
+              // if(value1.otherinfo != "") {
+              //   markdown += `<li> Other Info - ${value1.otherinfo} </li>`
+              // }
+              markdown += `</ul>`
+              markdown += `</details>`
+             
+
+
+            }
+  
+
+            markdown += ` | \n`
+
           }else{
             markdown += ` | **${value.name}** | \`${formatPara(value.desc)}\` | \n`
           }
+
+          // markdown += `"
+          // <details>
+          //   <summary>
+          //     Wandb
+          //   </summary>
+          //   Wandb is a tool that helps you monitor the training process. You can see the loss, accuracy, and other metrics in real time. You can also see the generated images and the model structure. You can find how to use wandb in the following link: https://docs.wandb.ai/quickstart
+          // </details>"`
+
         }
         }
       }
