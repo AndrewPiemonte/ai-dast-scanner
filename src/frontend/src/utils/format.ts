@@ -96,15 +96,6 @@ export function formatReport(report: Record<string, any>) : string{
           }else{
             markdown += ` | **${value.name}** | \`${formatPara(value.desc)}\` | \n`
           }
-
-          // markdown += `"
-          // <details>
-          //   <summary>
-          //     Wandb
-          //   </summary>
-          //   Wandb is a tool that helps you monitor the training process. You can see the loss, accuracy, and other metrics in real time. You can also see the generated images and the model structure. You can find how to use wandb in the following link: https://docs.wandb.ai/quickstart
-          // </details>"`
-
         }
         }
       }
