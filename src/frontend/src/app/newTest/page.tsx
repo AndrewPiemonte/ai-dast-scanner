@@ -2,10 +2,12 @@
 import styles from "../page.module.css";
 // import {LoginForm} from  "@/components/LoginForm"
 import { NewTestCard } from "./card"
+import { Menu } from "@/app/menu"
 
 export default function Home() {
   return (
     <div className={styles.background2}>
+      {/* <Menu> </Menu> */}
       <div className={styles.page}>
         <main className={styles.main}>
           <div>

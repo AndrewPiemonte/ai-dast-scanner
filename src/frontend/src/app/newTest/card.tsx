@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
+import { DrawerForNewTest } from "./DrawerTest"
 
 export function NewTestCard() {
     const [url, setUrl] = useState("");
@@ -18,14 +20,14 @@ export function NewTestCard() {
     const router = useRouter()
     const goToDislayPage = () => {
         sessionStorage.setItem('url', url);
-        if (testName !== ""){
+        if (testName !== "") {
             sessionStorage.setItem('testName', testName);
-        } else{
+        } else {
             sessionStorage.setItem('testName', "My First Test");
         }
-        
+
         router.push("/display");
-      }
+    }
 
     return (
         <Card className="mx-auto max-w-sm">
@@ -39,7 +41,7 @@ export function NewTestCard() {
             <CardContent>
                 <div className="grid gap-4">
                     <div className="grid gap-2">
-                    <Label>Test Name</Label>
+                        <Label>Test Name</Label>
                         <Input
                             placeholder="Enter your URL here"
                             value={testName}
@@ -90,6 +92,22 @@ export function NewTestCard() {
                                 </Button>
 
                             </div>
+
+                            <div className="flex justify-center">
+                                <Drawer>
+                                    <DrawerTrigger>
+                                        <Button variant="link">
+                                            Edit Configurations for Zap Scan
+                                        </Button>
+                                    </DrawerTrigger>
+                                    <DrawerContent>
+                                        <DrawerForNewTest></DrawerForNewTest>
+
+                                    </DrawerContent>
+                                </Drawer>
+
+                            </div>
+
 
 
                             <DialogFooter>
