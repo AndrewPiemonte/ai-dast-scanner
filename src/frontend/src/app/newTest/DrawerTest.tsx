@@ -20,9 +20,9 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export function DrawerForNewTest() {
+export function DrawerForNewTest({ data, setData, targetURL, setOpenDrawer }: { data: any, setData: React.Dispatch<React.SetStateAction<number[]>>, targetURL: string, setOpenDrawer: React.Dispatch<React.SetStateAction<boolean>>}) {
 
     const [enableAplha, setEnableAplha] = useState(false);
     const [enableIgnoreWarning, setEnableIgnoreWarning] = useState(false);
@@ -38,6 +38,85 @@ export function DrawerForNewTest() {
     const [enableSpiderMaxDuration, setSpiderMaxDuration] = useState("");
     const [enablePortNumber, setPortNumber] = useState("");
     const [enableDelay, setEnableDelay] = useState("");
+
+    useEffect(() => {
+
+        console.log("This runs only once!");
+
+        if (data.length == 1) {
+            setEnableTargetURL(targetURL);
+        } else {
+            for (const [index, value] of data.entries()) {
+                if (index == 0) {
+                    setEnableAplha(value);
+                }
+                if (index == 1) {
+                    setEnableIgnoreWarning(value);
+                }
+                if (index == 2) {
+                    setEnableAjaxSpider(value);
+                }
+                if (index == 3) {
+                    setEnableShortOutput(value);
+                }
+                if (index == 4) {
+                    setEnablePassiveScan(value);
+                }
+                if (index == 5) {
+                    setEnableDebug(value);
+                }
+                if (index == 6) {
+                    setEnableOutputFileJson(value);
+                }
+                if (index == 7) {
+                    setEnableTargetURL(targetURL);
+                }
+                if (index == 8) {
+                    setEnableScanConfig(value);
+                }
+                if (index == 9) {
+                    setEnableScanTimeout(value);
+                }
+                if (index == 10) {
+                    setEnableRemove(value);
+                }
+                if (index == 11) {
+                    setSpiderMaxDuration(value);
+                }
+                if (index == 12) {
+                    setPortNumber(value);
+                }
+                if (index == 13) {
+                    setEnableDelay(value);
+                }
+
+            }
+        }
+    }, []);
+
+    const SubmitButton = () => {
+        // Lets gather the data
+        const data = [
+            enableAplha,
+            enableIgnoreWarning,
+            enableAjaxSpider,
+            enableShortOutput,
+            enablePassiveScan,
+            enableDebug,
+            enableOutputFileJson,
+            enableTargetURL,
+            enableScanConfig,
+            enableScanTimeout,
+            enableRemove,
+            enableSpiderMaxDuration,
+            enablePortNumber,
+            enableDelay
+        ];
+        console.log(data)
+        setData(data);
+        setOpenDrawer(false);
+
+    }
 
     return (
         <div className={styles.center}>
@@ -75,7 +154,7 @@ export function DrawerForNewTest() {
 
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Switch checked={enableAplha} onCheckedChange={(value) => setEnableAplha(value)} />
+                                        <Switch checked={enableAplha} onCheckedChange={(value) => { setEnableAplha(value) }} />
                                     </TableCell>
                                 </TableRow>
                                 <TableRow>
@@ -193,6 +272,7 @@ export function DrawerForNewTest() {
                                         <Input className="w-[200px] inline-grid" type="email" placeholder="URL"
                                             value={enableTargetURL}
                                             onChange={(e) => setEnableTargetURL(e.target.value)}
+                                            disabled={true}
                                         />
                                     </TableCell>
                                 </TableRow>
@@ -288,9 +368,9 @@ export function DrawerForNewTest() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <Input className="w-[200px] inline-grid" type="number" placeholder="Enter the number Here"
-                                                 value={enablePortNumber}
-                                                 onChange={(e) => setPortNumber(e.target.value)}
-                                        
+                                            value={enablePortNumber}
+                                            onChange={(e) => setPortNumber(e.target.value)}
+
                                         /></TableCell>
                                 </TableRow>
                                 <TableRow>
@@ -308,8 +388,8 @@ export function DrawerForNewTest() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <Input className="w-[200px] inline-grid" type="number" placeholder="Enter the number Here"
-                                         value={enableDelay}
-                                         onChange={(e) => setEnableDelay(e.target.value)}
+                                            value={enableDelay}
+                                            onChange={(e) => setEnableDelay(e.target.value)}
                                         /></TableCell>
                                 </TableRow>
 
@@ -320,9 +400,11 @@ export function DrawerForNewTest() {
 
             </DrawerHeader>
             <DrawerFooter>
-                <Button>Submit</Button>
+            {/* <DrawerClose> */}
+                <Button onClick={SubmitButton}>Submit</Button>
+                {/* </DrawerClose> */}
                 <DrawerClose>
-                    <Button variant="outline">Cancel</Button>
+                    <Button variant="outline" onClick={() => {  setOpenDrawer(false);}}>Cancel</Button>
                 </DrawerClose>
             </DrawerFooter>
         </div>

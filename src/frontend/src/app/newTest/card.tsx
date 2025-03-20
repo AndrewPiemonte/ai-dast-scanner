@@ -15,6 +15,8 @@ import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, Dr
 import { DrawerForNewTest } from "./DrawerTest"
 
 export function NewTestCard() {
+    const [configData, setConfigData] = useState(Array(1).fill(0));
+    const [openDrawer, setOpenDrawer] = useState(false);
     const [url, setUrl] = useState("");
     const [testName, setTestName] = useState("");
     const router = useRouter()
@@ -94,14 +96,14 @@ export function NewTestCard() {
                             </div>
 
                             <div className="flex justify-center">
-                                <Drawer>
+                                <Drawer open={openDrawer}>
                                     <DrawerTrigger>
-                                        <Button variant="link">
+                                        <Button variant="link" onClick={() => {setOpenDrawer(true)}}>
                                             Edit Configurations for Zap Scan
                                         </Button>
                                     </DrawerTrigger>
                                     <DrawerContent>
-                                        <DrawerForNewTest></DrawerForNewTest>
+                                        <DrawerForNewTest data={configData} setData={setConfigData} targetURL={url} setOpenDrawer={setOpenDrawer}/>
 
                                     </DrawerContent>
                                 </Drawer>
