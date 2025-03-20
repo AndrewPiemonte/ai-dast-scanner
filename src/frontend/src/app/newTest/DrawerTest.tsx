@@ -20,8 +20,25 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useState } from "react";
 
 export function DrawerForNewTest() {
+
+    const [enableAplha, setEnableAplha] = useState(false);
+    const [enableIgnoreWarning, setEnableIgnoreWarning] = useState(false);
+    const [enableAjaxSpider, setEnableAjaxSpider] = useState(false);
+    const [enableShortOutput, setEnableShortOutput] = useState(false);
+    const [enablePassiveScan, setEnablePassiveScan] = useState(false);
+    const [enableDebug, setEnableDebug] = useState(false);
+    const [enableOutputFileJson, setEnableOutputFileJson] = useState(false);
+    const [enableTargetURL, setEnableTargetURL] = useState("");
+    const [enableScanConfig, setEnableScanConfig] = useState("");
+    const [enableScanTimeout, setEnableScanTimeout] = useState("");
+    const [enableRemove, setEnableRemove] = useState("");
+    const [enableSpiderMaxDuration, setSpiderMaxDuration] = useState("");
+    const [enablePortNumber, setPortNumber] = useState("");
+    const [enableDelay, setEnableDelay] = useState("");
+
     return (
         <div className={styles.center}>
             <DrawerHeader>
@@ -58,7 +75,7 @@ export function DrawerForNewTest() {
 
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Switch />
+                                        <Switch checked={enableAplha} onCheckedChange={(value) => setEnableAplha(value)} />
                                     </TableCell>
                                 </TableRow>
                                 <TableRow>
@@ -73,7 +90,9 @@ export function DrawerForNewTest() {
                                             </Tooltip>
                                         </TooltipProvider>
                                     </TableCell>
-                                    <TableCell className="text-right"><Switch /></TableCell>
+                                    <TableCell className="text-right">
+                                        <Switch checked={enableIgnoreWarning} onCheckedChange={(value) => setEnableIgnoreWarning(value)} />
+                                    </TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium flex items-center gap-2">Enable AJAX Spider
@@ -88,7 +107,9 @@ export function DrawerForNewTest() {
                                         </TooltipProvider>
 
                                     </TableCell>
-                                    <TableCell className="text-right"><Switch /></TableCell>
+                                    <TableCell className="text-right">
+                                        <Switch checked={enableAjaxSpider} onCheckedChange={(value) => setEnableAjaxSpider(value)} />
+                                    </TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium flex items-center gap-2">Enable Short Output
@@ -101,7 +122,9 @@ export function DrawerForNewTest() {
                                             </Tooltip>
                                         </TooltipProvider>
                                     </TableCell>
-                                    <TableCell className="text-right"><Switch /></TableCell>
+                                    <TableCell className="text-right">
+                                        <Switch checked={enableShortOutput} onCheckedChange={(value) => setEnableShortOutput(value)} />
+                                    </TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium flex items-center gap-2">Enable Passive Scan
@@ -115,7 +138,9 @@ export function DrawerForNewTest() {
                                             </Tooltip>
                                         </TooltipProvider>
                                     </TableCell>
-                                    <TableCell className="text-right"><Switch /></TableCell>
+                                    <TableCell className="text-right">
+                                        <Switch checked={enablePassiveScan} onCheckedChange={(value) => setEnablePassiveScan(value)} />
+                                    </TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium flex items-center gap-2">Enable Debug
@@ -129,12 +154,14 @@ export function DrawerForNewTest() {
                                             </Tooltip>
                                         </TooltipProvider>
                                     </TableCell>
-                                    <TableCell className="text-right"><Switch /></TableCell>
+                                    <TableCell className="text-right">
+                                        <Switch checked={enableDebug} onCheckedChange={(value) => setEnableDebug(value)} />
+                                    </TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium flex items-center gap-2">Enable Output File Json
 
-                                    <TooltipProvider>
+                                        <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger> <Info className="w-5 h-5 cursor-pointer text-gray-500" /></TooltipTrigger>
                                                 <TooltipContent>
@@ -145,12 +172,14 @@ export function DrawerForNewTest() {
 
 
                                     </TableCell>
-                                    <TableCell className="text-right"><Switch /></TableCell>
+                                    <TableCell className="text-right">
+                                        <Switch checked={enableOutputFileJson} onCheckedChange={(value) => setEnableOutputFileJson(value)} />
+                                    </TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium flex items-center gap-2">Enable target URL
 
-                                    <TooltipProvider>
+                                        <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger> <Info className="w-5 h-5 cursor-pointer text-gray-500" /></TooltipTrigger>
                                                 <TooltipContent>
@@ -160,12 +189,17 @@ export function DrawerForNewTest() {
                                         </TooltipProvider>
 
                                     </TableCell>
-                                    <TableCell className="text-right"><Input className="w-[200px] inline-grid" type="email" placeholder="URL" /></TableCell>
+                                    <TableCell className="text-right">
+                                        <Input className="w-[200px] inline-grid" type="email" placeholder="URL"
+                                            value={enableTargetURL}
+                                            onChange={(e) => setEnableTargetURL(e.target.value)}
+                                        />
+                                    </TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium flex items-center gap-2">Enable Scan Config
 
-                                    <TooltipProvider>
+                                        <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger> <Info className="w-5 h-5 cursor-pointer text-gray-500" /></TooltipTrigger>
                                                 <TooltipContent>
@@ -175,12 +209,17 @@ export function DrawerForNewTest() {
                                         </TooltipProvider>
 
                                     </TableCell>
-                                    <TableCell className="text-right"><Input className="w-[200px] inline-grid" placeholder="Enter text Here" /></TableCell>
+                                    <TableCell className="text-right">
+                                        <Input className="w-[200px] inline-grid" placeholder="Enter text Here"
+                                            value={enableScanConfig}
+                                            onChange={(e) => setEnableScanConfig(e.target.value)}
+
+                                        /></TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium flex items-center gap-2">Enable Scan Timeout
 
-                                    <TooltipProvider>
+                                        <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger> <Info className="w-5 h-5 cursor-pointer text-gray-500" /></TooltipTrigger>
                                                 <TooltipContent>
@@ -190,27 +229,35 @@ export function DrawerForNewTest() {
                                         </TooltipProvider>
 
                                     </TableCell>
-                                    <TableCell className="text-right"><Input className="w-[200px] inline-grid" type="number" placeholder="Enter the duration Here" /></TableCell>
+                                    <TableCell className="text-right">
+                                        <Input className="w-[200px] inline-grid" type="number" placeholder="Enter the duration Here"
+                                            value={enableScanTimeout}
+                                            onChange={(e) => setEnableScanTimeout(e.target.value)}
+                                        /></TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium flex items-center gap-2">Enable Remove
 
-                                    <TooltipProvider>
+                                        <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger> <Info className="w-5 h-5 cursor-pointer text-gray-500" /></TooltipTrigger>
                                                 <TooltipContent>
                                                     <p>List of specific scan rules to disable</p>
                                                 </TooltipContent>
                                             </Tooltip>
-                                        </TooltipProvider> 
+                                        </TooltipProvider>
 
                                     </TableCell>
-                                    <TableCell className="text-right"><Input className="w-[200px] inline-grid" type="text" placeholder="Enter text Here" /></TableCell>
+                                    <TableCell className="text-right">
+                                        <Input className="w-[200px] inline-grid" type="text" placeholder="Enter text Here"
+                                            value={enableRemove}
+                                            onChange={(e) => setEnableRemove(e.target.value)}
+                                        /></TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium flex items-center gap-2">Enable Spider Max Duration
 
-                                    <TooltipProvider>
+                                        <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger> <Info className="w-5 h-5 cursor-pointer text-gray-500" /></TooltipTrigger>
                                                 <TooltipContent>
@@ -220,12 +267,16 @@ export function DrawerForNewTest() {
                                         </TooltipProvider>
 
                                     </TableCell>
-                                    <TableCell className="text-right"><Input className="w-[200px] inline-grid" type="number" placeholder="Enter the number Here" /></TableCell>
+                                    <TableCell className="text-right">
+                                        <Input className="w-[200px] inline-grid" type="number" placeholder="Enter the number Here"
+                                            value={enableSpiderMaxDuration}
+                                            onChange={(e) => setSpiderMaxDuration(e.target.value)}
+                                        /></TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium flex items-center gap-2">Enable Port Number
 
-                                    <TooltipProvider>
+                                        <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger> <Info className="w-5 h-5 cursor-pointer text-gray-500" /></TooltipTrigger>
                                                 <TooltipContent>
@@ -235,12 +286,17 @@ export function DrawerForNewTest() {
                                         </TooltipProvider>
 
                                     </TableCell>
-                                    <TableCell className="text-right"><Input className="w-[200px] inline-grid" type="number" placeholder="Enter the number Here" /></TableCell>
+                                    <TableCell className="text-right">
+                                        <Input className="w-[200px] inline-grid" type="number" placeholder="Enter the number Here"
+                                                 value={enablePortNumber}
+                                                 onChange={(e) => setPortNumber(e.target.value)}
+                                        
+                                        /></TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium flex items-center gap-2">Enable Delay
 
-                                    <TooltipProvider>
+                                        <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger> <Info className="w-5 h-5 cursor-pointer text-gray-500" /></TooltipTrigger>
                                                 <TooltipContent>
@@ -250,21 +306,16 @@ export function DrawerForNewTest() {
                                         </TooltipProvider>
 
                                     </TableCell>
-                                    <TableCell className="text-right"><Input className="w-[200px] inline-grid" type="number" placeholder="Enter the number Here" /></TableCell>
+                                    <TableCell className="text-right">
+                                        <Input className="w-[200px] inline-grid" type="number" placeholder="Enter the number Here"
+                                         value={enableDelay}
+                                         onChange={(e) => setEnableDelay(e.target.value)}
+                                        /></TableCell>
                                 </TableRow>
 
                             </TableBody>
                         </Table>
-
-
-
-
-
-
                     </CardContent>
-                    <CardFooter>
-                        <p>Card Footer</p>
-                    </CardFooter>
                 </Card>
 
             </DrawerHeader>
