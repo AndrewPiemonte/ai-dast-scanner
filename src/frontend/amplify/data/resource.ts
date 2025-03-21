@@ -7,7 +7,7 @@ const schema = a.schema({
         testName: a.string(),
         testDate: a.string(),
         targetURL: a.string(),
-        type: a.enum(['basescan', "api"]),
+        type: a.string(),
         status: a.enum(["initiated", "running", "processing", "failed", "completed"])
     }).authorization(allow => [allow.owner()]),
     Chat: a.model({

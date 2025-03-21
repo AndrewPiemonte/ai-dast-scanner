@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import * as conf from '@/utils/conf.json'
 
 interface ResponseFormat {
     scan_id: string,
@@ -8,17 +9,15 @@ interface ResponseFormat {
 
 // Use `export async function POST` for App Router (app/api/ route.ts)
 export async function POST(req: NextRequest) {
-    const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL + "zap/basescan/";
+    const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL + "zap/basescan";
     try {
         // Parse the request body
         const val = await req.json();
-        const target_url = val.value
-        
-        const params = new URLSearchParams({
-            'target_url': target_url
-        });
-
-        console.log(`${baseURL}?${params}`)
+        console.log("api called")
+        console.log({
+            run_scan: val.run_scan,
+            tools: val.tools
+        })
         
 
         // Make the POST request from the backend 
@@ -27,7 +26,7 @@ export async function POST(req: NextRequest) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(params)
+            body: JSON.stringify(val)
         });
         
         const data: ResponseFormat = await zapServiceResponse.json();
@@ -35,6 +34,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: zapServiceResponse.status == 200, ...data});
 
     } catch (error) {
+        console.log(error)
         return NextResponse.json({ success: false, message: (error as Error).message }, { status: 500 });
     }
 }

@@ -1,6 +1,16 @@
-import { constants } from "buffer";
-import { config } from "process";
 import { isArrayOfJsons, isJsonObject, isString } from "./check";
+
+export function formatName(value: string): string {
+  try{
+      return value.toLowerCase()
+        .replace("enable", "")
+        .split("_")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+  } catch (error){
+    return value
+  }
+}
 
 export function formatReport(report: Record<string, any>) : string{
   let markdown: String = "";

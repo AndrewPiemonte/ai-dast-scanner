@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button"
 import {
     Card,
     CardContent,
-    CardDescription,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
@@ -11,19 +10,25 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
-import { DrawerForNewTest } from "./DrawerTest"
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer"
 import Configurations from "./configurations"
-
+import * as conf from "@/utils/conf.json"
+import {isString, isBoolean, isJsonObject, isJsonofJsons} from "@/utils/check"
 
 export function NewTestCard() {
-    const [configData, setConfigData] = useState(Array(1).fill(0));
-    const [openDrawer, setOpenDrawer] = useState(false);
-    const [url, setUrl] = useState("");
+    const [confs, setConfs] = useState<Record<string, any>>(conf);
     const [testName, setTestName] = useState("");
     const router = useRouter()
     const goToDislayPage = () => {
-        sessionStorage.setItem('url', url);
+        let tool = getTool(confs)
+        let mode = getMode(confs)
+        sessionStorage.setItem('targetURL', getTargetURL(confs))
+        sessionStorage.setItem('confs', JSON.stringify(confs))
+        if (tool && mode){
+            sessionStorage.setItem('testType', `${tool}, ${mode}`)
+        } else{
+            sessionStorage.setItem('testType', "unknown")
+        }
         if (testName !== "") {
             sessionStorage.setItem('testName', testName);
         } else {
@@ -33,38 +38,164 @@ export function NewTestCard() {
         router.push("/display");
     }
 
+        const handleToolChange = (newValue: string) => {
+            console.log(newValue);
+            if (isString(confs?.run_scan?.scanMode?.tool)) {
+                setConfs((prev) => ({
+                    ...prev,
+                    run_scan: {
+                        scanMode: {
+                            ...prev.run_scan.scanMode,
+                            tool: newValue,
+                        },
+                    },
+                }));
+            }
+    
+            console.log("new confs", confs);
+        };
+    
+        const handleModeChange = (newValue: string) => {
+            console.log(newValue);
+            if (isString(confs?.run_scan?.scanMode?.mode)) {
+                setConfs((prev) => ({
+                    ...prev,
+                    run_scan: {
+                        scanMode: {
+                            ...prev.run_scan.scanMode,
+                            mode: newValue,
+                        },
+                    },
+                }));
+            }
+        };
+    
+        const handleConfigChange = (val: string, newVal: any) => {
+            console.log(newVal);
+            console.log(val);
+            let scan = getConfigurations(confs);
+            console.log(scan);
+            if (isJsonObject(scan?.config[val])) {
+                let param = scan.config[val];
+                console.log("param", param);
+                if (isBoolean(param?.enabled) && isString(param?.type)) {
+                    let tool = getTool(confs);
+                    let mode = getMode(confs);
+                    console.log("setting tool and mode", tool);
+                    console.log(mode);
+                    if (tool != null && mode != null) {
+                        console.log("setting confs");
+                        setConfs((prev) => ({
+                            ...prev,
+                            tools: {
+                                ...prev.tools,
+                                [tool]: {
+                                    ...prev.tools[tool],
+                                    modes: {
+                                        ...prev.tools[tool].modes,
+                                        [mode]: {
+                                            ...prev.tools[tool].modes[mode],
+                                            config: {
+                                                ...prev.tools[tool].modes[mode].config,
+                                                [val]: {
+                                                    ...prev.tools[tool].modes[mode].config[val],
+                                                    enabled: true,
+                                                    value: newVal,
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        }));
+                    }
+                }
+            }
+        };
+
+        function getToolsConfigurations(conf: Record<string, any>): string[] {
+            if (isJsonofJsons(conf?.tools)) {
+                return Object.keys(conf.tools);
+            }
+            console.log(conf);
+            return ["ERROR: Configurations not found"];
+        }
+        
+        function getModesConfigurations(conf: Record<string, any>): string[] {
+            if (isString(conf?.run_scan?.scanMode?.tool)) {
+                let tool: string = conf.run_scan.scanMode.tool;
+                if (isJsonofJsons(conf?.tools[tool]?.modes)) {
+                    let modes = conf.tools[tool].modes;
+                    return Object.keys(modes);
+                }
+            }
+            return ["ERROR: Modes not found"];
+        }
+        
+        function getTool(conf: Record<string, any>): string | null {
+            if (isString(conf?.run_scan?.scanMode?.tool)) {
+                return conf?.run_scan?.scanMode?.tool;
+            }
+            return null;
+        }
+        
+        function getMode(conf: Record<string, any>): string | null {
+            if (isString(conf?.run_scan?.scanMode?.mode)) {
+                return conf?.run_scan?.scanMode?.mode;
+            }
+            return null;
+        }
+
+        function getTargetURL(conf: Record<string, any>): string {
+            let configurations = getConfigurations(conf)
+            if (configurations!=  null && isString(configurations?.ENABLE_TARGET_URL?.value)){
+                return configurations.ENABLE_TARGET_URL.value
+            }
+            return "unknown"
+        }
+        
+        function getConfigurations(
+            conf: Record<string, any>
+        ): Record<string, any> | null {
+            let tool = getTool(conf);
+            let mode = getMode(conf);
+            if (isString(tool) && isString(mode)) {
+                console.log("tool", tool);
+                console.log("mode", mode);
+                if (isJsonObject(conf?.tools[tool]?.modes[mode])) {
+                    console.log("entered core");
+                    return conf.tools[tool].modes[mode];
+                }
+            }
+        
+            return null;
+        }
+
     return (
-        <Card className="mx-auto max-w-sm">
+        <Card className="w-[800px]">
             <CardHeader>
-                <CardTitle className="text-3xl"> Submit a New Web App Test Using DAST Tools </CardTitle>
-                <br></br>
-                <CardDescription>
-                    Please enter your Web Application URL for testing
-                </CardDescription>
+                <CardTitle className="text-3xl"> Start a New Test with the DAST Tools </CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="grid gap-4">
                     <div className="grid gap-2">
                         <Label>Test Name</Label>
                         <Input
-                            placeholder="Enter your URL here"
+                            placeholder="Enter your Test Name Here"
                             value={testName}
+                            className = "w-[300px]"
+                            maxLength={20}
                             onChange={(e) => { setTestName(e.target.value) }}
-                            required
+                            required={true}
                         />
-                        <Label>URL</Label>
-                        <Input
-                            placeholder="Enter your URL here"
-                            value={url}
-                            onChange={(e) => { setUrl(e.target.value) }}
-                            required
-                        />
+                        <Configurations confs={confs} handleConfigChange={handleConfigChange} handleToolChange={handleToolChange} handleModeChange={handleModeChange} />
+                        <Button type="submit" onClick={goToDislayPage} className="w-full">
+                                Submit
+                        </Button>
                     </div>
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button type="submit" className="w-full">
-                                Submit
-                            </Button>
+                           
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[425px]">
                             <DialogHeader>
@@ -82,7 +213,6 @@ export function NewTestCard() {
                                         URL
                                     </Label>
                                     <Input
-                                        defaultValue={url}
                                         className="col-span-3"
                                         readOnly
                                     />
@@ -90,25 +220,10 @@ export function NewTestCard() {
                             </div>
                             <div className="flex justify-center">
                                 <Button variant="link">
-                                    <a href={url} target="_blank" rel="noopener noreferrer" >
+                                    <a target="_blank" rel="noopener noreferrer" >
                                         Link to the URL
                                     </a>
                                 </Button>
-
-                            </div>
-
-                            <div className="flex justify-center">
-                                <Drawer open={openDrawer}>
-                                    <DrawerTrigger>
-                                        <Button variant="link" onClick={() => {setOpenDrawer(true)}}>
-                                            Edit Configurations for Zap Scan
-                                        </Button>
-                                    </DrawerTrigger>
-                                    <DrawerContent>
-                                        <DrawerForNewTest data={configData} setData={setConfigData} targetURL={url} setOpenDrawer={setOpenDrawer}/>
-
-                                    </DrawerContent>
-                                </Drawer>
 
                             </div>
 
@@ -124,5 +239,6 @@ export function NewTestCard() {
 
             </CardContent>
         </Card>
+        
     )
 }

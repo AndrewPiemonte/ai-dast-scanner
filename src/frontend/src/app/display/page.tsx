@@ -3,10 +3,6 @@ import { BorderBeam } from "@/components/ui/border-beam";
 import styles from "./../page.module.css";
 import { use, useEffect, useState } from "react";
 import Meteors from "@/components/ui/meteors";
-import {JSONTree} from "react-json-tree";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import PulsatingButton from "@/components/ui/pulsating-button";
-import { uploadData } from "@aws-amplify/storage";
 import { useRouter } from "next/navigation"; 
 import jsPDF from "jspdf";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,7 +104,7 @@ export default function Home() {
 
 
     useEffect(() => {
-        const launchTest = async (testName: string, value: string) => {
+        const launchTest = async (testName: string, value: string, targetURL: string, testType: string) => {
             console.log('getReport Called')
             try{
             const res = await fetch(`/api/launchTest`, {
@@ -117,7 +113,7 @@ export default function Home() {
                     'Content-Type': 'application/json',
                     'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
                  },
-                body: JSON.stringify({value})
+                body: value
             });
             let response: ResponseFormat = await res.json();
             console.log("got respose")
@@ -142,8 +138,8 @@ export default function Home() {
                 testName: testName,
                 scan_id: response.scan_id,
                 testDate: today,
-                targetURL: value,
-                type: "basescan",
+                targetURL: targetURL,
+                type: testType,
                 status: response.status
             })
             }catch(error){
@@ -157,7 +153,10 @@ export default function Home() {
         }
 
         // Retrieve data from the browser's history state
-        const value = sessionStorage.getItem('url');
+        const value = sessionStorage.getItem('confs');
+        const targetURL: string = sessionStorage.getItem('targetURL')?? "unkown"
+        const testType: string = sessionStorage.getItem('testType')?? "unknown"
+        console.log("display confs", value)
         const testName = sessionStorage.getItem('testName')
         console.log(value); // Outputs: 'value'
 
@@ -165,7 +164,7 @@ export default function Home() {
             console.log('getting report');
             setCalled(true);
             console.log(fetched);
-            launchTest(testName, value);
+            launchTest(testName, value, targetURL, testType);
         }
 
         
