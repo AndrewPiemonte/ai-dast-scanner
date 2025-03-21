@@ -125,6 +125,7 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
                     'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
                  },
                 body: JSON.stringify({
+                    tool: "OWASP",
                     mode: "chat",
                     input_text: newMessage,
                     input_report: JSON.stringify(report)
