@@ -13,6 +13,8 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
 import { DrawerForNewTest } from "./DrawerTest"
+import Configurations from "./configurations"
+
 
 export function NewTestCard() {
     const [configData, setConfigData] = useState(Array(1).fill(0));

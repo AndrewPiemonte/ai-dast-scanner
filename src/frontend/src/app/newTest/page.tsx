@@ -2,7 +2,6 @@
 import styles from "../page.module.css";
 // import {LoginForm} from  "@/components/LoginForm"
 import { NewTestCard } from "./card"
-import { Menu } from "@/app/menu"
 
 export default function Home() {
   return (
