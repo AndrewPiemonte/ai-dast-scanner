@@ -148,7 +148,7 @@ export function NewTestCard() {
         }
 
         function getTargetURL(conf: Record<string, any>): string {
-            console.log("configurarions", configurations)
+            let configurations = getConfigurations(conf)
             if (configurations!=  null && isString(configurations?.config?.ENABLE_TARGET_URL?.value)){
                 return configurations.config.ENABLE_TARGET_URL.value
             }
