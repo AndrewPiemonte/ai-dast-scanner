@@ -190,30 +190,27 @@ export function NewTestCard() {
                             required={true}
                         />
                         <Configurations confs={confs} handleConfigChange={handleConfigChange} handleToolChange={handleToolChange} handleModeChange={handleModeChange} />
-                        <Button type="submit" onClick={goToDislayPage} className="w-full">
-                                Submit
-                        </Button>
                     </div>
                     <Dialog>
                         <DialogTrigger asChild>
-                           
+                        <Button type="submit" className="w-full">
+                                Submit
+                        </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[425px]">
                             <DialogHeader>
-                                <DialogTitle> Please confirm your URL address </DialogTitle>
+                                <DialogTitle> Please confirm your Target URL address </DialogTitle>
                                 <DialogDescription>
-                                    Confirm changes to your url address here, after this, the form will be submitted to the backend
+                                    Confirm changes to your url address here
                                 </DialogDescription>
                             </DialogHeader>
-
-
-
                             <div className="grid gap-4 py-4">
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <Label htmlFor="name" className="text-right">
-                                        URL
+                                        Target URL
                                     </Label>
                                     <Input
+                                        value={getTargetURL(confs)}
                                         className="col-span-3"
                                         readOnly
                                     />
@@ -221,7 +218,7 @@ export function NewTestCard() {
                             </div>
                             <div className="flex justify-center">
                                 <Button variant="link">
-                                    <a target="_blank" rel="noopener noreferrer" >
+                                    <a target="_blank"  href={getTargetURL(confs)}  rel="noopener noreferrer" >
                                         Link to the URL
                                     </a>
                                 </Button>
