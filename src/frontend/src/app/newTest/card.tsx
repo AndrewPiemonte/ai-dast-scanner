@@ -19,6 +19,7 @@ export function NewTestCard() {
     const [confs, setConfs] = useState<Record<string, any>>(conf);
     const [testName, setTestName] = useState("");
     const router = useRouter()
+    console.log("target URL", getTargetURL(confs))
     const goToDislayPage = () => {
         let tool = getTool(confs)
         let mode = getMode(confs)
@@ -147,9 +148,9 @@ export function NewTestCard() {
         }
 
         function getTargetURL(conf: Record<string, any>): string {
-            let configurations = getConfigurations(conf)
-            if (configurations!=  null && isString(configurations?.ENABLE_TARGET_URL?.value)){
-                return configurations.ENABLE_TARGET_URL.value
+            console.log("configurarions", configurations)
+            if (configurations!=  null && isString(configurations?.config?.ENABLE_TARGET_URL?.value)){
+                return configurations.config.ENABLE_TARGET_URL.value
             }
             return "unknown"
         }
