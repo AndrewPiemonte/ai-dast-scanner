@@ -1,6 +1,6 @@
 
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ChatComponent from "./chatUI"; // Your AI Chat UI component
 import { candyWrapperTheme, JsonEditor } from 'json-edit-react';
 import { downloadData } from "aws-amplify/storage";

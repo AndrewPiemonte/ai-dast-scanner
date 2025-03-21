@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Configurations from "./configurations"
+
 
 export function NewTestCard() {
     const [url, setUrl] = useState("");
@@ -39,6 +41,7 @@ export function NewTestCard() {
             <CardContent>
                 <div className="grid gap-4">
                     <div className="grid gap-2">
+                    <Configurations />
                     <Label>Test Name</Label>
                         <Input
                             placeholder="Enter your URL here"
