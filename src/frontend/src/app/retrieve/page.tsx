@@ -135,9 +135,12 @@ export default function Home() {
       <div className="flex flex-col w-full h-full">
        <div className = "w-full flex flex-row justify-between items-center h-100px bg-black text-white">
         <div className="px-5">
-          <h3 className="text-4xl font-extrabold tracking-tight lg:text-5xl"> 
+          <div className="flex flex-row items-center">
+          <img src="/UBC_logo.png" className="h-[60px] mx-3 py-[5px]" />
+          <h3 className="text-4xl font-extrabold tracking-tight lg:text-5xl mx-4"> 
             Dashboard
           </h3>
+          </div>
           </div>
           <div className="px-5 text-lg">
             <button onClick={signOut}>Sign out</button>
