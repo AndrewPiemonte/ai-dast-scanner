@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: backend-sa-role
+  namespace: default
+rules:
+  - apiGroups: [""]
+    resources: ["secrets", "configmaps", "pods", "deployments", "jobs"]
+    verbs: ["get", "list", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]  # ✅ ADD THIS to allow deployment updates
+    resources: ["deployments"]
+    verbs: ["get", "list", "create", "update", "patch", "delete"]
