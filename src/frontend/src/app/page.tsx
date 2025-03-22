@@ -14,8 +14,10 @@ export default function Home() {
   return (
     <div className={styles.background}>
         <main className={styles.main}>
-          <div className="flex flex-col items-center">
-          <img src="/UBC_logo.png" className="z-10 absolute top-0 left-0 m-8" />
+          <div className="  flex flex-col items-center">
+          <div className=" absolute left-0 top-0 m-4 flex items-center justify-center h-[100px] w-[100px] bg-black rounded-md">
+            <img src="/UBC_logo.png" className="h-[70px]" />
+          </div>
           <img className = "m-7" src="/DAEST.svg" width={450} height="auto" />
             <h1 className="tracking-tight lg:text-5xl text-white">
             Identify and Resolve Security Flaws in the Blink of an Eye

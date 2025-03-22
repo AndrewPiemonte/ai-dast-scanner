@@ -1,6 +1,6 @@
 
 "use client"
-import { ChatBubble, ChatBubbleAvatar, ChatBubbleMessage, ChatBubbleAction, ChatBubbleActionWrapper } from '@/components/ui/chat/chat-bubble'
+import { ChatBubble, ChatBubbleAvatar, ChatBubbleMessage } from '@/components/ui/chat/chat-bubble'
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list'
 import { ChatButton } from './chatButton';
 import { useState, useEffect } from 'react';
@@ -63,6 +63,7 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
                     let {data: newChat} = await client.models.Chat.create({
                         id: chatId
                     })
+                    console.log(newChat)
                     if(newChat){
                         setChat(newChat)
                         await client.models.Message.create({

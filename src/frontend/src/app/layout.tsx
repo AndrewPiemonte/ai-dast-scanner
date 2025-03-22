@@ -104,7 +104,8 @@ export default function RootLayout({
         }
       `}</style>
        <ThemeProvider theme = {theme}>
-      <Authenticator className={styles.background5} components = {components}>
+      <Authenticator 
+      className={styles.background5} components = {components}>
         {children} 
       </Authenticator>
       </ThemeProvider>

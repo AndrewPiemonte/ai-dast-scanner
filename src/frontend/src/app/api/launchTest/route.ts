@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import * as conf from '@/utils/conf.json'
 
 interface ResponseFormat {
     scan_id: string,

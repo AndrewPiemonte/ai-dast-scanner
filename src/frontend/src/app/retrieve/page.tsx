@@ -24,6 +24,10 @@ export default function Home() {
   const [reports, setReports] = useState<Array<Schema["reportInfo"]["type"]>>([]);
   const reportsRef = useRef(reports)
   const { signOut } = useAuthenticator();
+  const handleSignOut = async () => {
+    await signOut();      
+    router.push('/');      
+  };
   const [runTask, setRunTask] = useState<Boolean>(true)
   const newTest = () => {
     router.push("/newTest")
@@ -136,14 +140,16 @@ export default function Home() {
        <div className = "w-full flex flex-row justify-between items-center h-100px bg-black text-white">
         <div className="px-5">
           <div className="flex flex-row items-center">
-          <img src="/UBC_logo.png" className="h-[60px] mx-3 py-[5px]" />
+          <div className="flex flex-row items-center">
+          <img src="/DAEST_MD.png" className="h-[80px] mr-3 py-[5px]" />
           <h3 className="text-4xl font-extrabold tracking-tight lg:text-5xl mx-4"> 
             Dashboard
           </h3>
           </div>
           </div>
+          </div>
           <div className="px-5 text-lg">
-            <button onClick={signOut}>Sign out</button>
+            <button onClick={handleSignOut}>Sign out</button>
           </div>
         </div>
         <div className="overflow-hidden h-full w-full border md:shadow-xl bg-white bg-opacity-30">
