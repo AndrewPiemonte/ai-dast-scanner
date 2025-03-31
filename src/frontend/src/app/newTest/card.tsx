@@ -20,6 +20,7 @@ export function NewTestCard() {
     const [testName, setTestName] = useState("");
     const router = useRouter()
     console.log("target URL", getTargetURL(confs))
+    console.log("confs", confs)
     const goToDislayPage = () => {
         let tool = getTool(confs)
         let mode = getMode(confs)

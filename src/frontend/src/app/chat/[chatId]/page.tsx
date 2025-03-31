@@ -42,6 +42,7 @@ export default function SplitScreen ({params}:{
     useEffect(()=>{
         const getReport = async () =>{
             try{
+            console.log("getting report")
             const id = (await params).chatId;
             setChatId(id)
             let reportFile: Record<string, any>
@@ -62,13 +63,18 @@ export default function SplitScreen ({params}:{
             if(chartProps.histogram.data.length > 0){
                 setHistData(chartProps.histogram)
             }
-            setJsonReport(jsonReport)
             setData(formatReport(jsonReport))
+            console.log("json report", jsonReport)
+            let {ai_analysis, ...normReport} = jsonReport
+            console.log("ai Analysis", ai_analysis)
+            console.log("norm report", normReport)
+            setJsonReport(normReport)
             } catch(error){
                 console.log(error)
                 setData("Error: report not found")
             }
         }
+        console.log("useeffect triggered")
         getReport()
     }, [])
 

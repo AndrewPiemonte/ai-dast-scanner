@@ -29,8 +29,11 @@ export default function Home() {
     router.push('/');      
   };
   const [runTask, setRunTask] = useState<Boolean>(true)
-  const newTest = () => {
-    router.push("/newTest")
+  const newTest = async () => {
+    let res = await fetch(`/api/getConfigUpdates`, {method: "POST"})
+    if (res.ok){
+      router.push("/newTest")
+    }
   }
 
   async function deleteReport(reportId: string){

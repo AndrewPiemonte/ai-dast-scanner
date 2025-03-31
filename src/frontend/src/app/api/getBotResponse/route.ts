@@ -8,7 +8,6 @@ export async function POST(req: NextRequest) {
     try {
         // Parse the request body
         const param = await req.json();
-        console.log(param)
 
         // Make the POST request from the backend 
         const botResponse = await fetch(`${baseURL}`, {

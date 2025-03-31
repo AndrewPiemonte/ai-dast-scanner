@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(val)
+            body: JSON.stringify({config: val})
         });
         
         const data: ResponseFormat = await zapServiceResponse.json();

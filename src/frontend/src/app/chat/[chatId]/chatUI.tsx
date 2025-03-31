@@ -5,7 +5,7 @@ import { ChatMessageList } from '@/components/ui/chat/chat-message-list'
 import { ChatButton } from './chatButton';
 import { useState, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal } from 'lucide-react';
+import { ChartBarStacked, Terminal } from 'lucide-react';
 import { generateClient } from 'aws-amplify/data';
 import {Schema} from '../../../../amplify/data/resource';
 
@@ -63,16 +63,16 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
                     let {data: newChat} = await client.models.Chat.create({
                         id: chatId
                     })
-                    console.log(newChat)
                     if(newChat){
-                        setChat(newChat)
-                        await client.models.Message.create({
-                            chatId: chatId,
+                        console.log("creating messages")
+                        let {errors, data: newMessage} = await client.models.Message.create({
+                            chatId: newChat?.id,
                             content: "Hello, how are you? I can help you with any questions you have with the report",
                             sender: "bot"
                         })
+                        console.log("new message", newMessage, errors)
+                        setChat(newChat)
                     }
-                    console.log(newChat)
                 }
                 setFetchMessages(true)
                 sethasChat(true)
@@ -112,13 +112,14 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
     useEffect(()=>{
 
         const createMessages = async() => {
-            let clientMessage = await client.models.Message.create({
+            let {errors, data: clientMessage} = await client.models.Message.create({
                 chatId: chat?.id,
                 content: newMessage,
                 sender: "user"
             })
-            setChatBotResponding(true);
+            console.log("client message", clientMessage, errors)
             setFetchMessages(true);
+            setChatBotResponding(true);
             const responseAI = await fetch(`/api/getBotResponse`, {
                 method: 'POST',
                 headers: { 
@@ -126,7 +127,7 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
                     'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
                  },
                 body: JSON.stringify({
-                    tool: "OWASP",
+                    tool: "owasp",
                     mode: "chat",
                     input_text: newMessage,
                     input_report: JSON.stringify(report)
@@ -135,17 +136,17 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
             try {
                 let {response: chatResponse} = await responseAI.json()
                 console.log(chatResponse)
-                let chatbotMessage = await client.models.Message.create({
+                let {errors, data: chatbotMessage } = await client.models.Message.create({
                     chatId: chat?.id,
                     content: chatResponse,
                     sender: "bot"
                 })
-                console.log(chatbotMessage)
-                setFetchMessages(true)
+                console.log("chat message", chatbotMessage, errors)
             } catch(error){
                 console.log(error)
             }
             setChatBotResponding(false)
+            setFetchMessages(true)
             console.log(clientMessage)
             setHasNewMessage(false)
         }

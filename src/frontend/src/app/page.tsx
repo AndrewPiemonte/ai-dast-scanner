@@ -1,7 +1,6 @@
 'use client';
 import styles from "./page.module.css";
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { useRouter } from "next/navigation";
 import "@aws-amplify/ui-react/styles.css";
 
