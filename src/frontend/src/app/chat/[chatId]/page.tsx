@@ -65,10 +65,7 @@ export default function SplitScreen ({params}:{
             }
             setData(formatReport(jsonReport))
             console.log("json report", jsonReport)
-            let {ai_analysis, ...normReport} = jsonReport
-            console.log("ai Analysis", ai_analysis)
-            console.log("norm report", normReport)
-            setJsonReport(normReport)
+            setJsonReport(jsonReport)
             } catch(error){
                 console.log(error)
                 setData("Error: report not found")

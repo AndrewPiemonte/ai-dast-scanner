@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ChartBarStacked, Terminal } from 'lucide-react';
 import { generateClient } from 'aws-amplify/data';
 import {Schema} from '../../../../amplify/data/resource';
+import { isArrayOfJsons, isString } from '@/utils/check';
 
 
 interface Message {
@@ -120,6 +121,17 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
             console.log("client message", clientMessage, errors)
             setFetchMessages(true);
             setChatBotResponding(true);
+            let input_report = report;
+            console.log("checking report")
+            if(isArrayOfJsons(report?.ai_analysis?.response)){
+                console.log("is array")
+                let response = report.ai_analysis.response
+                console.log(response)
+                if( response.length > 0 && isString(response[0]?.response)){
+                    console.log("response passed")
+                    input_report = response[0].response
+                }
+            }
             const responseAI = await fetch(`/api/getBotResponse`, {
                 method: 'POST',
                 headers: { 
@@ -130,7 +142,7 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
                     tool: "owasp",
                     mode: "chat",
                     input_text: newMessage,
-                    input_report: JSON.stringify(report)
+                    input_report: JSON.stringify(input_report)
                 })
             });
             try {

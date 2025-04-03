@@ -20,6 +20,20 @@ export function formatReport(report: Record<string, any>) : string{
     console.log("has ai analysis")
     markdown += "## AI Summary: \n\n"
     markdown += report.ai_analysis.response.replaceAll("**Vulnerability Name:**", "####")
+  } else if ( isArrayOfJsons(ai_analysis?.response)){
+    let responses = ai_analysis.response;
+    let total = ai_analysis?.total_reports ?? 1
+    console.log("has multiple ai analysis")
+    let no = 1;
+    for(const response of responses){
+      if (isJsonObject(response) && isString(response?.response)){
+        markdown += `## AI Summary ${no}/${total}: \n\n`
+        markdown += response.response.replaceAll("**Vulnerability Name:**", "####")
+        markdown += "\n\n"
+        no += 1;
+      }
+    }
+
   }
   console.log(typeof ai_analysis?.response)
   markdown += `\n\n ## Report \n\n`;
