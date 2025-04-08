@@ -6,10 +6,18 @@ The solution, DAEST: AI-Enhanced Security Testing, provides a user-friendly inte
 ## Cloud Architecture
 As seen in Figure 1, users interact with the web application hosted on AWS Amplify, which uses AWS Cognito for authentication. Once a user creates a new test, the server side of the Next.js Application contacts an Elastic Load Balancer (ELB) which redirects the request to a Kubernetes Pod hosted on an EC2 server (by the AWS EKS) which then triggers a Job to run an OWASP ZAP Base Scan, detecting vulnerabilities in the web application. The scan results are processed and stored in Amazon S3 as raw reports. These reports are then passed to AWS Bedrock, which analyzes the findings and generates clear report-suggested solutions. The final report is stored and displayed through the web interface. For the chatbot functionality, the client side of the Next.js API handler will forward the user prompt and report (as context) to the Fast API backend, which responds with the answer of the LLM. The system uses AWS EKS Cluster to manage containerized workflows and AWS Elastic Load Balancer to efficiently handle requests, ensuring scalability, reliability, and a seamless user experience. 
 <div align="center">
-![CPEN491CloudArchitectureDiagram](https://github.com/user-attachments/assets/32adadf9-2b26-4fb9-937f-5bbd087bb3db)
+
+![Cloud Architecture Diagram](/docs/images/architectureDiagram.png)
+
   Figure 1. High-Level Architecture Diagram
  </div>
 
+## Deployment Guide
+The deployment is broken down into two, the Amplify Application (Frontend + Authentication and Databases) and EKS Backend. First deploy the backend using the following instructions:
+[backend deployment documentation](/docs/backend/aws-cdk-deployment.md)
+
+
+## User Guide
 
 
  
