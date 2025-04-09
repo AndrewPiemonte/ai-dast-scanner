@@ -2,7 +2,7 @@
 <h5 style="margin-bottom: 10px; margin-top: 0px; padding-left: 20px;"> By Andrew Piemonte, Alfredo A. del Rayo, Junsu An, and Ranbir Sharma in collaboration with the UBC CIC </h5>
 
 
-This Capstone project is a collaborative effort by senior UBC Electrical and Computer Engineering students, developed for the UBC Cloud Innovation Centre.
+This Capstone project is a collaborative effort by senior UBC Electrical and Computer Engineering undergraduate students, developed for the UBC Cloud Innovation Centre.
 
 The solution, DAEST: AI-Enhanced Security Testing, provides a user-friendly interface for launching security tests, a detailed summary report enhanced by artificial intelligence, and assistance. The report highlights security issues while providing practical tips for implementation, and the chatbot answers questions regarding the report. By streamlining the security testing process, this platform makes web application security more efficient and approachable for developers, regardless of their technical security expertise.
 
@@ -58,4 +58,4 @@ The user workflow of our platform depicted in figure 2 can be broken down into t
 8. When accessing a completed test, the user is directed to the Report + Chatbot Page, which presents the security scan results on the left panel and an interactive AI assistant on the right. The user can review the report and ask questions related to its findings. Once finished, they can return to the Dashboard Page. 
 
 
-
+<img src="/docs/images/footer.png" style="width: 100%;"/>
