@@ -12,6 +12,7 @@ const schema = a.schema({
     }).authorization(allow => [allow.owner()]),
     Chat: a.model({
         id: a.id(),
+        reportId: a.id(),
         messages: a.hasMany("Message", "chatId")
     }).authorization(allow => [allow.owner()]),
     Message: a.model({

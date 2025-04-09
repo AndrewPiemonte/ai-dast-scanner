@@ -1,5 +1,8 @@
-# AI Enhanced Security Testing Platform
-This is an ECE Capstone Project built for the UBC Cloud Innovation Centre.
+<h1 style="margin: 0px;"> AI Enhanced Security Testing Platform </h1>
+<h5 style="margin-bottom: 10px; margin-top: 0px; padding-left: 20px;"> By Andrew Piemonte, Alfredo A. del Rayo, Junsu An, and Ranbir Sharma in collaboration with the UBC CIC </h5>
+
+
+This is an UBC Capstone Project of the faculty of Electrical and Computer Engineering built for the UBC Cloud Innovation Centre.
 
 The solution, DAEST: AI-Enhanced Security Testing, provides a user-friendly interface for launching security tests, a detailed summary report enhanced by artificial intelligence, and assistance. The report highlights security issues while providing practical tips for implementation, and the chatbot answers questions regarding the report. By streamlining the security testing process, this platform makes web application security more efficient and approachable for developers, regardless of their technical security expertise.
 
@@ -13,13 +16,23 @@ As seen in Figure 1, users interact with the web application hosted on AWS Ampli
  </div>
 
 ## Deployment Guide
-The deployment is broken down into two, the Amplify Application (Frontend + Authentication and Databases) and EKS Backend. First deploy the backend using the following instructions:
+The deployment is broken down into two parts, the Amplify Application (Frontend + Amplify backend) and the Kubernetes Backend. 
+
+First deploy the Kubernetes backend using the following instructions:
+
 [backend deployment documentation](/docs/backend/aws-cdk-deployment.md)
 
+Then deploy the frontend:
+
+[frontend deployment documentation](/docs/frontend/frontend-deployment.md)
 
 ## User Guide
+Use the following guide to get familiar with launching a security test:
+
+[User Guide](/docs/userGuide.md)
 
 
+## Estimated Budget
  
 
  

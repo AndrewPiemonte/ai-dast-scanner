@@ -29,6 +29,19 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
     const [fetchMessages, setFetchMessages] = useState<Boolean>(false);
     const [chatBotResponding, setChatBotResponding] = useState<Boolean>(false);
 
+    function saveMessage(chatId: string | null, content: string, sender: 'bot' | 'user'){
+        try{
+            const savedMessage = client.models.Message.create({
+                chatId,
+                content,
+                sender
+            })
+            console.log("Message created", savedMessage)
+        } catch(error){
+            console.log("Error saving message", error)
+        }
+    }
+
 
     const submitButtonEvent = (message: string, event: React.FormEvent<HTMLFormElement>) => {
         if (hasNewMessage) {
@@ -66,12 +79,7 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
                     })
                     if(newChat){
                         console.log("creating messages")
-                        let {errors, data: newMessage} = await client.models.Message.create({
-                            chatId: newChat?.id,
-                            content: "Hello, how are you? I can help you with any questions you have with the report",
-                            sender: "bot"
-                        })
-                        console.log("new message", newMessage, errors)
+                        saveMessage(newChat.id,"Hello, how are you? I can help you with any questions you have with the report", "bot" )
                         setChat(newChat)
                     }
                 }
@@ -92,16 +100,20 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
 
     useEffect(()=>{
         const getMessages = async () => {
-            if(chat){
-                let {data: chatMessages} = await chat.messages()
+            if(chat && isString(chat?.id)){
+                console.log("getting messages", chat)
+                let {data: chatMessages} = await client.models.Message.list()
+                console.log("messages", chatMessages)
                 chatMessages = chatMessages.sort((a, b) => 
                     new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
                 
-                console.log(chatMessages)
+                
                 setCurrentChatMessages(chatMessages.reverse())
             }
             setFetchMessages(false);
         }
+
+        console.log("chat with no id")
 
         if(fetchMessages){
             getMessages()
