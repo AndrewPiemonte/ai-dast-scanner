@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide explains how to deploy the AWS infrastructure for our AI-Enhanced Security Testing platform using AWS CDK. The infrastructure consists of VPC, EKS cluster, S3 storage, and optional LLM (SageMaker) components.
+This guide explains how to deploy the AWS infrastructure for our AI-Enhanced Security Testing platform using AWS CDK. The infrastructure consists of VPC, EKS cluster, S3 storage, and optional LLM Bedrock components.
 
 ## Prerequisites
 
