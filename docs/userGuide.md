@@ -40,9 +40,20 @@ Having launched at least one security test
 ### Steps
 1. Wait until the launched security test shows status of completed
 2. Click on the name of the test highlighted in blue
+3. You will land on the report page
+   a. Scroll on the left view to see the rest of the report. The report is composed of:
+       - Vulnerability Severity Pie Chart
+       - Vulnerability Histogram by category
+       - AI Summary of report
+       - Tabulated Report created by the security testing tool 
+   b. Prompt the chatbot on the right if you have any questions
 
 <div align="center">
 
 ![Accessing Test Results, Step 1](/docs/images/AccessingTestResults1.png)
 Figure 6. Accessing Test Results, Step 1
+![Accessing Test Results, Step 2](/docs/images/AccessingTestResults2.png)
+Figure 7. Accessing Test Results, Step 2
+![Accessing Test Results, Step 3](/docs/images/AccessingTestResults3.png)
+Figure 8. Accessing Test Results, Step 3
 </div>

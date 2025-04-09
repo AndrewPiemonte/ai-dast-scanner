@@ -40,13 +40,6 @@
                             "mandatory": false,
                             "description": "Generates a concise output instead of a full scan report."
                         },
-                        "ENABLE_PASSIVE_SCAN": {
-                            "type": "boolean",
-                            "value": false,
-                            "enabled": false,
-                            "mandatory": false,
-                            "description": "Enables passive scanning (does not send malicious requests)."
-                        },
                         "ENABLE_TARGET_URL": {
                             "type": "text",
                             "value": "https://agar.io",
@@ -62,7 +55,7 @@
                             "description": "Timeout (in minutes) before the scan is stopped."
                         },
                         "ENABLE_REMOVE": {
-                            "type": "text",
+                            "type": "text_str",
                             "value": "50003,10003",
                             "enabled": false,
                             "mandatory": false,
