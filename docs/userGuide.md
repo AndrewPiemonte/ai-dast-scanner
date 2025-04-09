@@ -1,8 +1,9 @@
 # DAEST Platform User Guide
 
+
 ## How to launch a security test?
-### Prerequesites
-The url of the platform you want to test
+### Prerequisites
+The URL of the platform you want to test
 
 ### Steps
 1. From the dashboard page click on 'New Test'
@@ -20,19 +21,28 @@ The url of the platform you want to test
 <div align="center">
 
 ![Launch Test Step 1](/docs/images/LaunchingTest1.png)
+
 Figure 1. Launching a Security Test, Step 1
+
 ![Launch Test Step 2](/docs/images/LaunchingTest2.png)
+
 Figure 2. Launching a Security Test, Step 2
+
 ![Launch Test Step 3](/docs/images/LaunchingTest3.png)
-Figure 3. Lauching a Security Test, Step 3
+
+Figure 3. Launching a Security Test, Step 3
+
 ![Launch Test Step 4](/docs/images/LaunchingTest4.png)
+
 Figure 4. Launching a Security Test, Step 4
+
 ![Launch Test Step 5](/docs//images/LaunchingTest5.png)
+
 Figure 5. Launching a Security Test, Step 5
 
 </div>
 
-## How do I access my Test Results?
+## How do I access my test results?
 
 ### Prerequisites
 Having launched at least one security test
@@ -51,9 +61,15 @@ Having launched at least one security test
 <div align="center">
 
 ![Accessing Test Results, Step 1](/docs/images/AccessingTestResults1.png)
+
 Figure 6. Accessing Test Results, Step 1
+
+
 ![Accessing Test Results, Step 2](/docs/images/AccessingTestResults2.png)
+
 Figure 7. Accessing Test Results, Step 2
+
 ![Accessing Test Results, Step 3](/docs/images/AccessingTestResults3.png)
+
 Figure 8. Accessing Test Results, Step 3
 </div>
