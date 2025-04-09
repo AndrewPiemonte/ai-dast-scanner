@@ -37,6 +37,7 @@ Use the following guide to get familiar with launching a security test:
 
 ## Estimated Budget
 The monthly estimate can be found below:
+
 [Cost Estimate](/docs/costEstimate.md)
  
 
