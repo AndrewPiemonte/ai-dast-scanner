@@ -26,20 +26,36 @@ Then deploy the frontend:
 
 [frontend deployment documentation](/docs/frontend/frontend-deployment.md)
 
+## Estimated Costs
+The monthly estimate can be found below:
+
+[Cost Estimate](/docs/costEstimate.md)
+
 ## User Guide
 Use the following guide to get familiar with launching a security test:
 
 [User Guide](/docs/userGuide.md)
 
 ## User Workflow
+<div align="center">
 
+![User Workflow of the Platform](/docs/images/userWorkflow.png)
+Figure 2. DAEST Platform User Workflow
+</div>
 
+The user workflow of our platform depicted in figure 2 can be broken down into the following steps:  
 
-## Estimated Budget
-The monthly estimate can be found below:
-
-[Cost Estimate](/docs/costEstimate.md)
- 
+1. An unauthenticated user begins at the Main Page, as shown in Figure 2, where they are prompted to log in.  
+2. On the Login Page, the user must enter valid credentials (username and password) to proceed. 
+3. The authenticated user is directed to the Dashboard Page (Figure 2), which displays all previously launched tests. From this page, the user may: 
+  a. Click "Launch Test" to initiate a new scan (Step 4), or 
+  b. Click on the name of a completed test to view its results (Step 8). 
+  c. Click on “Sign Out” (go back to Step 1) 
+4. Selecting "Launch Test" navigates the user to the New Test Configuration Page, where they can input the test name, choose a DAST tool and scan mode, specify the target URL, and optionally modify advanced configuration settings. 
+5. A confirmation dialog appears, allowing the user to validate the target URL via a direct link. 
+6. The Loading Page then briefly appears as the test is initialized. 
+7. Once the test is successfully initiated, the Results Page confirms that initialization is complete. The user may return to the Dashboard Page to monitor test status (step 3). 
+8. When accessing a completed test, the user is directed to the Report + Chatbot Page, which presents the security scan results on the left panel and an interactive AI assistant on the right. The user can review the report and ask questions related to its findings. Once finished, they can return to the Dashboard Page. 
 
 
 
