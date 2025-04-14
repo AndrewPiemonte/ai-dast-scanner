@@ -67,7 +67,7 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
 
         const getMessageChat = async () =>{
             try{
-                let { data: fetchedChat} = await client.models.Chat.get({ id: chatId });
+                let { data: fetchedChat} = await client.models.Chat.get({ reportId: chatId });
                 if(fetchedChat){
                     setChat(fetchedChat)
                     console.log("fetch chat")
@@ -75,7 +75,7 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
                 } else{
                     console.log("new chat")
                     let {data: newChat} = await client.models.Chat.create({
-                        id: chatId
+                        reportId: chatId
                     })
                     if(newChat){
                         console.log("creating messages")

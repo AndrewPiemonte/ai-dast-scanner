@@ -13,11 +13,10 @@ const schema = a.schema({
     Chat: a.model({
         id: a.id(),
         reportId: a.id(),
-        messages: a.hasMany("Message", "chatId")
+        messages: a.hasMany("Message", "chat")
     }).authorization(allow => [allow.owner()]),
     Message: a.model({
       id: a.id(),
-      chatId: a.id(),
       chat: a.belongsTo("Chat", "chatId"),
       content: a.string(),
       sender: a.enum(["user", "bot"])
