@@ -29,9 +29,9 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
     const [fetchMessages, setFetchMessages] = useState<Boolean>(false);
     const [chatBotResponding, setChatBotResponding] = useState<Boolean>(false);
 
-    function saveMessage(chatId: string | null, content: string, sender: 'bot' | 'user'){
+    async function saveMessage(chatId: string | null, content: string, sender: 'bot' | 'user'){
         try{
-            const savedMessage = client.models.Message.create({
+            const savedMessage = await client.models.Message.create({
                 chatId,
                 content,
                 sender
@@ -67,7 +67,10 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
 
         const getMessageChat = async () =>{
             try{
-                let { data: fetchedChat} = await client.models.Chat.get({ reportId: chatId });
+                let { data: chats } = await client.models.Chat.list({
+                    filter: { reportId: { eq: chatId } }
+                  });  
+                let fetchedChat = chats[0]; 
                 if(fetchedChat){
                     setChat(fetchedChat)
                     console.log("fetch chat")
@@ -79,7 +82,7 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
                     })
                     if(newChat){
                         console.log("creating messages")
-                        saveMessage(newChat.id,"Hello, how are you? I can help you with any questions you have with the report", "bot" )
+                        await saveMessage(newChat.id,"Hello, how are you? I can help you with any questions you have with the report", "bot" )
                         setChat(newChat)
                     }
                 }
@@ -102,7 +105,7 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
         const getMessages = async () => {
             if(chat && isString(chat?.id)){
                 console.log("getting messages", chat)
-                let {data: chatMessages} = await client.models.Message.list()
+                let {data: chatMessages} = await chat.messages()
                 console.log("messages", chatMessages)
                 chatMessages = chatMessages.sort((a, b) => 
                     new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -113,7 +116,6 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
             setFetchMessages(false);
         }
 
-        console.log("chat with no id")
 
         if(fetchMessages){
             getMessages()
@@ -125,54 +127,46 @@ export default function ChatComponent({chatId, report} : {chatId: string, report
     useEffect(()=>{
 
         const createMessages = async() => {
-            let {errors, data: clientMessage} = await client.models.Message.create({
-                chatId: chat?.id,
-                content: newMessage,
-                sender: "user"
-            })
-            console.log("client message", clientMessage, errors)
-            setFetchMessages(true);
-            setChatBotResponding(true);
-            let input_report = report;
-            console.log("checking report")
-            if(isArrayOfJsons(report?.ai_analysis?.response)){
-                console.log("is array")
-                let response = report.ai_analysis.response
-                console.log(response)
-                if( response.length > 0 && isString(response[0]?.response)){
-                    console.log("response passed")
-                    input_report = response[0].response
+            if(chat?.id){
+                await saveMessage(chat.id, newMessage, "user")
+                console.log("client message")
+                setFetchMessages(true);
+                setChatBotResponding(true);
+                let input_report = report;
+                console.log("checking report")
+                if(isArrayOfJsons(report?.ai_analysis?.response)){
+                    console.log("is array")
+                    let response = report.ai_analysis.response
+                    console.log(response)
+                    if( response.length > 0 && isString(response[0]?.response)){
+                        console.log("response passed")
+                        input_report = response[0].response
+                    }
                 }
+                const responseAI = await fetch(`/api/getBotResponse`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+                    },
+                    body: JSON.stringify({
+                        tool: "owasp",
+                        mode: "chat",
+                        input_text: newMessage,
+                        input_report: JSON.stringify(input_report)
+                    })
+                });
+                try {
+                    let {response: chatResponse} = await responseAI.json()
+                    console.log(chatResponse);
+                    await saveMessage( chat.id, chatResponse, "bot");
+                } catch(error){
+                    console.log(error)
+                }
+                setChatBotResponding(false)
+                setFetchMessages(true)
+                setHasNewMessage(false)
             }
-            const responseAI = await fetch(`/api/getBotResponse`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
-                 },
-                body: JSON.stringify({
-                    tool: "owasp",
-                    mode: "chat",
-                    input_text: newMessage,
-                    input_report: JSON.stringify(input_report)
-                })
-            });
-            try {
-                let {response: chatResponse} = await responseAI.json()
-                console.log(chatResponse)
-                let {errors, data: chatbotMessage } = await client.models.Message.create({
-                    chatId: chat?.id,
-                    content: chatResponse,
-                    sender: "bot"
-                })
-                console.log("chat message", chatbotMessage, errors)
-            } catch(error){
-                console.log(error)
-            }
-            setChatBotResponding(false)
-            setFetchMessages(true)
-            console.log(clientMessage)
-            setHasNewMessage(false)
         }
 
         if(hasNewMessage){
