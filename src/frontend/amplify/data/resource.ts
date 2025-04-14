@@ -10,16 +10,19 @@ const schema = a.schema({
         type: a.string(),
         status: a.enum(["initiated", "running", "processing", "failed", "completed"])
     }).authorization(allow => [allow.owner()]),
+    
+    Message: a.model({
+        id: a.id(),
+        chatId: a.id(),
+        chat: a.belongsTo("Chat", "chatId"),
+        content: a.string(),
+        sender: a.enum(["user", "bot"])
+      }).authorization(allow => [allow.owner()]),
+    
     Chat: a.model({
         id: a.id(),
         reportId: a.id(),
-        messages: a.hasMany("Message", "chat")
-    }).authorization(allow => [allow.owner()]),
-    Message: a.model({
-      id: a.id(),
-      chat: a.belongsTo("Chat", "chatId"),
-      content: a.string(),
-      sender: a.enum(["user", "bot"])
+        messages: a.hasMany("Message", "chatId")
     }).authorization(allow => [allow.owner()])
 })
 
