@@ -140,8 +140,6 @@ export default function SplitScreen ({params}:{
             </div>
             {/* Left Side - File Viewer */}
             <div className="w-1/2 h-full overflow-y-auto border-r p-4">
-            <div className="px-5 text-lg">
-            </div>
             
             <div className="w-800px" ref={targetRef}>
             

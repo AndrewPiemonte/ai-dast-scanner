@@ -4,7 +4,7 @@
 
 This Capstone project is a collaborative effort by senior UBC Electrical and Computer Engineering undergraduate students, developed for the UBC Cloud Innovation Centre.
 
-The solution, DAEST: AI-Enhanced Security Testing, provides a user-friendly interface for launching security tests, a detailed summary report enhanced by artificial intelligence, and assistance. The report highlights security issues while providing practical tips for implementation, and the chatbot answers questions regarding the report. By streamlining the security testing process, this platform makes web application security more efficient and approachable for developers, regardless of their technical security expertise.
+The solution, DAEST: AI-Enhanced Security Testing, provides a user-friendly interface for launching security tests, a detailed summary report enhanced by artificial intelligence, and assistance. The report highlights security issues while providing practical tips for implementation, and the chatbot answers questions regarding the report. By streamlining the security testing process, this platform makes web application security more efficient and approachable for developers, regardless of their technical security expertise. Watch the [Demo video](https://youtu.be/69zGO0BYB2A) for an introduction to the platform.
 
 ## Cloud Architecture
 As seen in Figure 1, users interact with the web application hosted on AWS Amplify, which uses AWS Cognito for authentication. Once a user creates a new test, the server side of the Next.js Application contacts an Elastic Load Balancer (ELB) which redirects the request to a Kubernetes Pod hosted on an EC2 server (by the AWS EKS) which then triggers a Job to run an OWASP ZAP Base Scan, detecting vulnerabilities in the web application. The scan results are processed and stored in Amazon S3 as raw reports. These reports are then passed to AWS Bedrock, which analyzes the findings and generates clear report-suggested solutions. The final report is stored and displayed through the web interface. For the chatbot functionality, the client side of the Next.js API handler will forward the user prompt and report (as context) to the Fast API backend, which responds with the answer of the LLM. The system uses AWS EKS Cluster to manage containerized workflows and AWS Elastic Load Balancer to efficiently handle requests, ensuring scalability, reliability, and a seamless user experience. 
@@ -35,6 +35,7 @@ The monthly estimate can be found below:
 Use the following guide to get familiar with launching a security test:
 
 [User Guide](/docs/userGuide.md)
+[Demo Video](https://youtu.be/69zGO0BYB2A)
 
 ## User Workflow
 <div align="center">
@@ -48,9 +49,9 @@ The user workflow of our platform depicted in figure 2 can be broken down into t
 1. An unauthenticated user begins at the Main Page, as shown in Figure 2, where they are prompted to log in.  
 2. On the Login Page, the user must enter valid credentials (username and password) to proceed. 
 3. The authenticated user is directed to the Dashboard Page (Figure 2), which displays all previously launched tests. From this page, the user may: 
-  a. Click "Launch Test" to initiate a new scan (Step 4), or 
-  b. Click on the name of a completed test to view its results (Step 8). 
-  c. Click on “Sign Out” (go back to Step 1) 
+   - a. Click "Launch Test" to initiate a new scan (Step 4), or 
+   - b. Click on the name of a completed test to view its results (Step 8). 
+   - c. Click on “Sign Out” (go back to Step 1) 
 4. Selecting "Launch Test" navigates the user to the New Test Configuration Page, where they can input the test name, choose a DAST tool and scan mode, specify the target URL, and optionally modify advanced configuration settings. 
 5. A confirmation dialog appears, allowing the user to validate the target URL via a direct link. 
 6. The Loading Page then briefly appears as the test is initialized. 
