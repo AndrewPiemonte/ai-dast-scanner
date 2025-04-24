@@ -1,7 +1,7 @@
 """
 zap_scan_config_generator.py
 
-This script dynamically generates configuration files for OWASP ZAP security scans 
+This script dynamically generates configuration files for owasp ZAP security scans 
 based on `scan_config.json`. It automates the creation of:
 
 1. **`config.py` for each tool and mode**  
@@ -96,7 +96,7 @@ def generate_config_py() -> None:
     **Example Output:**
     ```
     scan_config/
-    ├── OWASP/
+    ├── owasp/
     │   ├── config-fullscan.py   Created
     │   ├── config-quickscan.py   Created
     ├── SomeTool/  ❌ Not Created (Directory Missing)
@@ -323,14 +323,14 @@ def generate_values_yaml() -> None:
             "helm", "upgrade", "--install", RELEASE_NAME, CHART_PATH, "-f", VALUES_YAML_PATH_CONFIG, "--debug"
         ]
 
-        #subprocess.run(
-        #    helm_command,
-        #    check=True,
-        #    text=True,
-        #    capture_output=True  
-        #)
+        subprocess.run(
+           helm_command,
+           check=True,
+           text=True,
+           capture_output=True  
+        )
 
-        #logger.info(f" Helm upgrade successful")
+        logger.info(f" Helm upgrade successful")
       
     except subprocess.CalledProcessError as e:
         logger.error(f"Helm upgrade failed:\n{e.stderr}")
@@ -363,7 +363,7 @@ def generate_zap_scan_job_yaml() -> None:
 
     **Example Output:**
     ```yaml
-    # Dynamically generated for tool 'OWASP', mode 'fullscan'. Do not edit manually.
+    # Dynamically generated for tool 'owasp', mode 'fullscan'. Do not edit manually.
 
     {{- if eq .Values.scan_settings.scanMode "fullscan" }}
     apiVersion: batch/v1

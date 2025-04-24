@@ -16,6 +16,21 @@ class Settings:
     BASE_MODEL_ID = "meta.llama3-1-70b-instruct-v1:0"
     """ID of the AI model used for analysis, defaulting to Meta Llama 3-70B."""
 
+    MAX_INPUT_TOKENS = 8192
+    """Maximum number of tokens accepted as input for this model (prompt context window)."""
+
+    MAX_GENERATED_TOKENS = 1500
+    """Maximum number of tokens allowed for the model to generate in a single response."""
+
+    TOKEN_BUFFER = 128  
+    """Safety margin to avoid hitting exact limit."""
+
+    LOCAL_TOKENIZER_MODEL_ID = "NousResearch/Llama-2-70b-chat-hf"
+    """Tokenizer model used locally to estimate token counts before sending prompts to Bedrock.
+
+    We use a publicly available tokenizer (LLaMA 2 70B) because Meta's LLaMA 3 tokenizer requires gated access via Hugging Face.
+    LLaMA 2's tokenizer provides a very close approximation of token count for LLaMA 3, making it suitable for validating input length.
+    """
     # -------------------- S3 Storage Configuration --------------------
     BUCKET_NAME = os.getenv("S3_BUCKET_NAME", "s3stack-aestbucket11161ed0-oyzazupebp7h")
     """AWS S3 bucket name used for storing scan reports and other relevant data."""
@@ -39,6 +54,25 @@ class Settings:
 
     DEFAULT_SERVICE_ACCOUNT = os.getenv("K8S_SERVICE_ACCOUNT", "backend-sa")
     """Kubernetes service account used for running the ZAP scan job."""
+
+    K8S_JOB_REGISTRATION_RETRIES = int(os.getenv("K8S_JOB_REGISTRATION_RETRIES", "15"))
+    """Maximum number of retries while waiting for job registration."""
+
+    K8S_JOB_REGISTRATION_DELAY = int(os.getenv("K8S_JOB_REGISTRATION_DELAY", "5"))
+    """Delay (in seconds) between retries while polling for job registration."""
+
+    K8S_JOB_POD_RETRIES = int(os.getenv("K8S_JOB_POD_RETRIES", "10"))
+    """Maximum number of retries while waiting for a pod to appear for a job."""
+
+    K8S_JOB_POD_DELAY = int(os.getenv("K8S_JOB_POD_DELAY", "5"))
+    """Delay (in seconds) between polling attempts for pod readiness."""
+
+    K8S_JOB_COMPLETION_RETRIES = int(os.getenv("K8S_JOB_COMPLETION_RETRIES", "60"))
+    """Maximum number of retry attempts to wait for a Kubernetes Job to complete."""
+
+    K8S_JOB_COMPLETION_DELAY = int(os.getenv("K8S_JOB_COMPLETION_DELAY", "10"))
+    """Delay in seconds between each retry while polling for Kubernetes Job completion."""
+
 
     # -------------------- Configuration File Paths --------------------
     SCAN_CONFIG_JSON_PATH = "config/scan_config.json"

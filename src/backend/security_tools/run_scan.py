@@ -95,7 +95,7 @@ def load_tool_config(tool):
         LOGGER.error(f"Error loading configuration: {e}")
         raise ImportError(f"Failed to import config from {config_path}")
 
-def execute_zap_scan(mode,tool , report_filename):
+def execute_scan(mode,tool , report_filename):
     """
     Executes the security scan by dynamically building the command and running it.
 
@@ -256,11 +256,11 @@ if __name__ == "__main__":
     Steps:
     1. Retrieves scan configuration by calling `get_scan_config()`.
     2. Initializes logging by calling `setup_logger(mode, scan_id)`.
-    3. Executes the scan by calling `execute_zap_scan(mode, report_filename)`.
+    3. Executes the scan by calling `execute_scan(mode, report_filename)`.
     """
 
     mode, scan_id, report_filename, tool = get_scan_config()
     LOGGER = setup_logger(mode=mode, scan_id=scan_id)
     config = load_tool_config(tool)
     SCAN_FLAGS = config.SCAN_FLAGS
-    execute_zap_scan(mode=mode, tool=tool, report_filename=report_filename)
+    execute_scan(mode=mode, tool=tool, report_filename=report_filename)

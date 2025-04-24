@@ -5,12 +5,29 @@ import subprocess
 import asyncio
 import uuid
 #from urllib.parse import urlparse
-import bedrock_client
+import bedrock_service
 from app_resources import s3_client, k8s_api, core_v1_api, logger
 from config.settings import settings
 from botocore.exceptions import ClientError
-from fastapi import HTTPException
 from kubernetes import client
+
+from exceptions import (
+    TokenLimitExceeded,
+    LLMInvocationError,
+    ConfigLoadError,
+    IncompleteFlagConfigurationError,
+    S3UploadError,
+    InvalidToolError,
+    InvalidModeError,
+    MissingRequiredFieldsError,
+    InvalidJSONInputError,
+    KubernetesJobRegistrationError,
+    KubernetesPodLookupError,
+    KubernetesJobTimeoutError,
+    KubernetesJobReportMissingError,
+    KubernetesJobMonitorError,
+)
+
 
 
 # Initialize S3 client
@@ -35,9 +52,11 @@ def get_s3_keys(scan_id: str) -> tuple:
     return report_key, status_key
 
 
-# Remove the running_scans dictionary
-# Instead, we'll track scan state in S3 and through Kubernetes jobs
-async def start_zap_basescan(scan_mode: str, scan_tool:str,  scan_config: dict):
+async def start_zap_basescan(
+    scan_mode: str, 
+    scan_tool: str,  
+    scan_config: dict
+) -> str:
     """
     Initiates a ZAP baseline security scan as a background task and returns a scan ID immediately.
 
@@ -72,14 +91,21 @@ async def start_zap_basescan(scan_mode: str, scan_tool:str,  scan_config: dict):
     
     # Verify the chart path exists
     if not os.path.exists(chart_path):
-        logger.error(f"Chart path does not exist: {chart_path}")
-        # Try to list files in the /app directory to see what's available
         try:
             app_files = os.listdir("/app")
-            logger.info(f"Files in /app directory: {app_files}")
+            error_msg = (
+                f"Chart path not found: {chart_path}\n"
+                f"Files in /app directory: {app_files}"
+            )
+            logger.critical(error_msg)
+            raise ConfigLoadError(error_msg)
         except Exception as e:
-            logger.error(f"Could not list files in /app: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"ZAP chart path not found: {chart_path}")
+            error_msg = (
+                f"Chart path not found: {chart_path}\n"
+                f"Could not list files in /app: {str(e)}"
+            )
+            logger.critical(error_msg)
+            raise ConfigLoadError(error_msg)
     
     # Store initial scan status in S3
     status_data = {
@@ -105,12 +131,14 @@ async def start_zap_basescan(scan_mode: str, scan_tool:str,  scan_config: dict):
         )
         logger.info(f"Uploaded initial status to S3 for scan ID: {scan_id}")
     except Exception as e:
-        logger.error(f"Failed to upload status to S3: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to initialize scan in S3: {str(e)}")
-    
+        error_msg = f"Failed to upload status to S3: {str(e)}"
+        logger.error(error_msg)
+        raise S3UploadError(error_msg)
+
+    #TODO: HANDLE ERRORS? OR THE LINE BELOW HANDLES ALL?
     # Start the scan process in the background without awaiting completion
     background_task = asyncio.create_task(
-        execute_zap_scan(
+        execute_scan(
             scan_tool=scan_tool,
             scan_id=scan_id,
             scan_config=scan_config,
@@ -127,21 +155,30 @@ async def start_zap_basescan(scan_mode: str, scan_tool:str,  scan_config: dict):
     
     return scan_id
 
-def handle_task_result(task, scan_id):
+def handle_task_result(task, scan_id: str) -> None:
     """Handle results from background tasks to ensure errors are logged"""
     try:
         # Check if the task raised an exception
         exception = task.exception()
         if exception:
             logger.error(f"Background task for scan {scan_id} failed with exception: {exception}")
-            # We could also update the scan status in S3 here, but the execute_zap_scan function
+            # We could also update the scan status in S3 here, but the execute_scan function
             # should already handle that if possible
     except asyncio.CancelledError:
         logger.warning(f"Background task for scan {scan_id} was cancelled")
     except Exception as e:
         logger.error(f"Error handling background task result for scan {scan_id}: {str(e)}")
 
-async def execute_zap_scan(scan_id: str, scan_tool:str, scan_mode: str, job_name: str, release_name: str, namespace: str, chart_path: str, scan_config: dict):
+async def execute_scan(
+    scan_id: str,
+    scan_tool: str,
+    scan_mode: str,
+    job_name: str,
+    release_name: str,
+    namespace: str,
+    chart_path: str,
+    scan_config: dict
+) -> None:
     """
     Executes a ZAP baseline security scan as a background task.
 
@@ -168,6 +205,7 @@ async def execute_zap_scan(scan_id: str, scan_tool:str, scan_mode: str, job_name
     """
     try:
 
+        #TODO: CHECK IF THIS RAISES ERROR
         # Update status to running in S3
         await update_scan_status(scan_id, "running")
 
@@ -180,8 +218,10 @@ async def execute_zap_scan(scan_id: str, scan_tool:str, scan_mode: str, job_name
         for flag_key, config in config_flags.items():
             if config.get("type") == "dynamic": continue #dynamic variables have value set in template.yaml
             if "enabled" not in config or config.get("enabled") is None: 
-                logger.warning(f"Flag '{flag_key}' is missing the 'enabled' field or has field but it is not set to a valid value.")
-                continue  # Skip processing this flag since it is incomplete
+                # Cannot proceed if config is not properly set; raise an error
+                error_msg = f"Flag '{flag_key}' is missing the 'enabled' field or has field but it is not set to a valid value."
+                logger.warning(error_msg)
+                raise IncompleteFlagConfigurationError(error_msg)
 
             if config.get("enabled"):  #Proceed only if `enabled` is explicitly set to True
                 if "flag" in config and config["flag"]:  #Only process flags with a valid CLI flag
@@ -192,9 +232,14 @@ async def execute_zap_scan(scan_id: str, scan_tool:str, scan_mode: str, job_name
                 if env_var:
                     if "value" not in config or config["value"] is None:
                         # Cannot proceed if values are not properly set; raise an error
-                        raise ValueError(f"Missing required value for enabled flag: {flag_key}")
-                    helm_settings[f"scan_settings.{scan_tool}.{scan_mode}.values.{env_var}"] = config["value"]
-
+                        error_msg = f"Missing required value for enabled flag: {flag_key}"
+                        logger.warning(error_msg)
+                        raise IncompleteFlagConfigurationError(error_msg)
+                    if config.get("type") == "text_str": 
+                        helm_settings[f"scan_settings.{scan_tool}.{scan_mode}.values.{env_var}"] = f"{str(config['value'])}"
+                        logger.info(config.get("env_var"))
+                    else:
+                        helm_settings[f"scan_settings.{scan_tool}.{scan_mode}.values.{env_var}"] = config["value"]
 
         logger.info(f"Helm Setttings: {helm_settings}")
         
@@ -215,6 +260,7 @@ async def execute_zap_scan(scan_id: str, scan_tool:str, scan_mode: str, job_name
 
         logger.info(f"Executing Helm command: {' '.join(helm_command)}")
         
+        #TODO: CHECK IF THIS RAISES ERROR
         result = subprocess.run(
             helm_command,
             stdout=subprocess.PIPE,
@@ -223,30 +269,37 @@ async def execute_zap_scan(scan_id: str, scan_tool:str, scan_mode: str, job_name
             timeout=60
         )
 
+        #TODO: CHECK IF THIS RAISES ERROR
         if result.returncode != 0:
             error_msg = f"Helm release failed: {result.stderr}"
             logger.error(error_msg)
             await update_scan_status(scan_id, "failed", error=error_msg)
             return
 
+        #TODO:REMOVE THIS IS FOR DEBUGGING 
         logger.info(f"Helm release triggered successfully for {scan_id}. Output:\n{result.stdout}")
 
         # Wait for job completion
         try:
             await wait_for_job_registration(job_name, namespace)
             await wait_for_job_to_complete(job_name, namespace, scan_id)
-
-            #TODO: check for erros, if does nto work report is still generated
-            # If we're here, the report should exist
-            await run_ai_security_analysis(scan_tool=scan_tool, scan_id=scan_id)
-            
-            # Update status to completed
-            await update_scan_status(scan_id, "completed")
             
         except Exception as e:
-            error_msg = f"Job execution failed: {str(e)}"
+            error_msg = f" Job execution failed: {str(e)}"
             logger.error(error_msg)
             await update_scan_status(scan_id, "failed", error=error_msg)
+            return # Exit early — no AI analysis if the scan job didn't complete successfully
+
+        # AI analysis is optional: attempt it, but do not block report generation if it fails
+        try:
+            await run_ai_security_analysis(scan_tool=scan_tool, scan_id=scan_id)
+            await update_scan_status(scan_id, "completed")
+        except Exception as e:
+            # If AI analysis fails, log it and still mark scan as completed, attaching the error
+            error_msg = f" AI analysis failed: {e}"
+            logger.error(error_msg)
+            await update_scan_status(scan_id, "completed", error=error_msg)
+            # No re-raise here: we still want the report to go through
 
     except Exception as e:
         error_msg = f"Scan execution failed: {str(e)}"
@@ -254,7 +307,11 @@ async def execute_zap_scan(scan_id: str, scan_tool:str, scan_mode: str, job_name
         await update_scan_status(scan_id, "failed", error=error_msg)
 
 
-async def update_scan_status(scan_id, status, error=None):
+async def update_scan_status(
+    scan_id: str,
+    status: str,
+    error: str | None = None
+) -> None:
     """
     Updates the scan status in an S3 bucket.
 
@@ -305,7 +362,10 @@ async def update_scan_status(scan_id, status, error=None):
         logger.info(f"Failed to update scan status in S3: {str(e)}")
         # Continue execution even if status update fails
 
-async def run_ai_security_analysis(scan_tool: str, scan_id: str):
+async def run_ai_security_analysis(
+    scan_tool: str, 
+    scan_id: str
+) -> None:
     """Triggers AI analysis and updates the report file in S3 with AI results."""
     
     report_key, status_key = get_s3_keys(scan_id)  
@@ -327,11 +387,16 @@ async def run_ai_security_analysis(scan_tool: str, scan_id: str):
             return
         
         #TODO maybe error not cought because if another thread
-        
+
         # Invoke AI analysis
-        ai_analysis = await asyncio.to_thread(
-            bedrock_client.invoke, tool=scan_tool, mode="report", input_text="", input_report=report_string
+        ai_analysis = await bedrock_service.invoke(
+            tool=scan_tool,
+            mode="report",
+            input_text="",
+            input_report=report_string
         )
+
+        #TODO maybe check if analysis is empty...
 
         # Update the report with AI analysis
         report_data["ai_analysis"] = ai_analysis
@@ -342,16 +407,35 @@ async def run_ai_security_analysis(scan_tool: str, scan_id: str):
 
         logger.info(f"AI analysis added and report updated for scan_id: {scan_id}")
 
-    except s3_client.exceptions.NoSuchKey:
-        logger.info(f"Report file not found for scan_id: {scan_id}. Cannot update.")
-    except ClientError as e:
-        logger.error(f"AWS S3 ClientError: {e}")
-    except json.JSONDecodeError as e:
-        logger.error(f"Error decoding JSON from S3: {e}")
-    except Exception as e:
-        logger.error(f"Unexpected error while updating report: {e}")
+    except (
+        ConfigLoadError,
+        InvalidToolError,
+        InvalidModeError,
+        MissingRequiredFieldsError,
+        InvalidJSONInputError,
+        TokenLimitExceeded,
+        LLMInvocationError,
+    ) as e:
+        # These are domain-specific validation or LLM-related errors.
+        # Allow them to propagate to the upstream handler.
+        raise
 
-async def check_scan_status(scan_id: str):
+    # The following exceptions are non-blocking for the main report workflow.
+    # We're only trying to attach the AI summary here; if it fails, we continue 
+    # so the scan report can still be returned without the AI-generated insights.
+    except s3_client.exceptions.NoSuchKey:
+        logger.info(f"[{scan_id}] Report file not found in S3. AI summary will be skipped.")
+
+    except ClientError as e:
+        logger.error(f"[{scan_id}] AWS S3 ClientError encountered. AI summary could not be generated: {e}")
+
+    except json.JSONDecodeError as e:
+        logger.error(f"[{scan_id}] Failed to parse JSON report from S3. AI summary could not be generated: {e}")
+
+    except Exception as e:
+        logger.error(f"[{scan_id}] Unexpected error while generating AI summary: {e}")
+
+async def check_scan_status(scan_id: str) -> dict:
     """
     Retrieves the status of a ZAP scan and returns the report if available.
 
@@ -394,6 +478,8 @@ async def check_scan_status(scan_id: str):
             status_data = json.loads(status_response['Body'].read().decode('utf-8'))
             
             status = status_data.get("status", "unknown")
+            updated_at = status_data.get("updated_at", "unknown")
+            created_at = status_data.get("created_at", "unknown")
             
             if status == "completed":
                 logger.info(f"Scan {scan_id} completed. Retrieving report...")
@@ -406,6 +492,8 @@ async def check_scan_status(scan_id: str):
                     return {
                         "scan_id": scan_id,
                         "status": status,
+                        "created_at": created_at,
+                        "updated_at": updated_at,
                         "message": "Scan completed successfully",
                         "report": report_data
                     }
@@ -437,7 +525,7 @@ async def check_scan_status(scan_id: str):
                             # If job succeeded but no report yet, it's still processing
                             return {
                                 "scan_id": scan_id,
-                                "status": "processing",
+                                "status": status,
                                 "message": "Scan completed, generating report"
                             }
                         elif job.status.failed:
@@ -510,8 +598,8 @@ async def wait_for_job_registration(job_name: str, namespace: str):
         HTTPException: If the job is not registered within the expected time.
         client.exceptions.ApiException: If an API error occurs other than a 404 (Not Found).
     """
-    max_retries = 15
-    delay_seconds = 5
+    max_retries = settings.K8S_JOB_REGISTRATION_RETRIES
+    delay_seconds = settings.K8S_JOB_REGISTRATION_DELAY
 
     for attempt in range(max_retries):
         try:
@@ -527,9 +615,13 @@ async def wait_for_job_registration(job_name: str, namespace: str):
                 logger.info(f"Attempt {attempt + 1}: Job '{job_name}' not found. Retrying in {delay_seconds} seconds...")
                 await asyncio.sleep(delay_seconds)
                 continue
-            raise
+            error_msg = f"Kubernetes API error while checking job '{job_name}': {e}"
+            logger.critical(error_msg)
+            raise KubernetesJobRegistrationError(error_msg)
 
-    raise HTTPException(status_code=500, detail=f"Job '{job_name}' was not registered in Kubernetes within the expected time.")
+    error_msg = f"Job '{job_name}' was not registered in Kubernetes within the expected time."
+    logger.critical(error_msg)
+    raise KubernetesJobRegistrationError(error_msg)
 
 async def get_pod_for_job(job_name: str, namespace: str) -> str:
     """
@@ -556,8 +648,8 @@ async def get_pod_for_job(job_name: str, namespace: str) -> str:
     Raises:
         HTTPException: If no pod is found within the expected time.
     """
-    max_retries = 10  # Retry up to 10 times
-    delay_seconds = 5  # Start with a 5-second delay
+    max_retries = settings.K8S_JOB_POD_RETRIES
+    delay_seconds = settings.K8S_JOB_POD_DELAY
 
     for attempt in range(max_retries):
         pods = core_v1_api.list_namespaced_pod(
@@ -571,15 +663,18 @@ async def get_pod_for_job(job_name: str, namespace: str) -> str:
                 logger.info(f"Pod for job '{job_name}' found: {pod_name}")
                 return pod_name
             elif pod_status in ("Failed", "Error", "Unknown"):
-                logger.error(f"Pod '{pod_name}' for job '{job_name}' is in a failure state: '{pod_status}'. Aborting operation.")
-                raise HTTPException(status_code=500, detail=f"Pod '{pod_name}' encountered an error state: '{pod_status}'.")
+                error_msg = f"Pod '{pod_name}' for job '{job_name}' is in a failure state: '{pod_status}'. Aborting operation."
+                logger.critical(error_msg)
+                raise KubernetesPodLookupError(error_msg)
             else:
                 logger.info(f"Pod '{pod_name}' for job '{job_name}' is in state '{pod_status}'. Retrying...")
         
         logger.info(f"Attempt {attempt + 1}: Pod for job '{job_name}' not found. Retrying in {delay_seconds} seconds...")
         await asyncio.sleep(delay_seconds)
 
-    raise HTTPException(status_code=500, detail=f"No pod found for job '{job_name}' within the expected time.")
+    error_msg = f"No pod found for job '{job_name}' within the expected time."
+    logger.critical(error_msg)
+    raise KubernetesPodLookupError(error_msg)
 
 
 async def wait_for_job_to_complete(job_name: str, namespace: str, scan_id: str):
@@ -608,13 +703,13 @@ async def wait_for_job_to_complete(job_name: str, namespace: str, scan_id: str):
         Exception: If an unexpected error occurs during job monitoring.
     """
 
-    max_retries = 60
-    delay_seconds = 10
+    max_retries = settings.K8S_JOB_COMPLETION_RETRIES
+    delay_seconds = settings.K8S_JOB_COMPLETION_DELAY
 
     for attempt in range(max_retries):
         try:
             job_status = k8s_api.read_namespaced_job_status(name=job_name, namespace=namespace) #TODO: Not used
-            pod_name = await get_pod_for_job(job_name, namespace)
+            pod_name = await get_pod_for_job(job_name=job_name, namespace=namespace)
             pod = core_v1_api.read_namespaced_pod(name=pod_name, namespace=namespace)
 
             # Check pod phase
@@ -625,7 +720,7 @@ async def wait_for_job_to_complete(job_name: str, namespace: str, scan_id: str):
                 )
                 
                 # Check for successful report generation with correct filename
-                report_key, status_key = get_s3_keys(scan_id) 
+                report_key, status_key = get_s3_keys(scan_id=scan_id) 
                 if f"Scan completed successfully. Report saved at {report_key}" in logs:
                     logger.info(f"ZAP scan completed and report generated for job '{job_name}'")
                     
@@ -635,32 +730,41 @@ async def wait_for_job_to_complete(job_name: str, namespace: str, scan_id: str):
                     #TODO: Save console output of scan to a file or something if they need it later or add to report, 
                     #TODO: Some scan or console outputs are important as well
                     #TODO: Do it the job better in run_scan.py
-
                     return
                 else:
-                    raise HTTPException(
-                        status_code=500,
-                        detail={
-                            "message": "ZAP scan failed to generate report",
-                            "logs": logs,
-                            "job_name": job_name,
-                            "pod_name": pod_name
-                        }
-                    )
+                    error_msg = f"ZAP scan for job '{job_name}' (pod: '{pod_name}') completed, but report not found in logs."
+                    logger.error(error_msg)
+                    raise KubernetesJobReportMissingError(error_msg)
 
             logger.info(f"Attempt {attempt + 1}: Job is still running. Retrying in {delay_seconds} seconds...")
             await asyncio.sleep(delay_seconds)
             
         except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail={
-                    "message": f"Failed to check job status: {str(e)}",
-                    "job_name": job_name
-                }
-            )
+            error_msg = f"Failed to check job status '{job_name}': {e}"
+            logger.critical(error_msg)
+            raise KubernetesJobMonitorError(error_msg)
 
-    raise HTTPException(
-        status_code=500,
-        detail=f"Job '{job_name}' did not complete within the expected time."
-    )
+    error_msg = f"ZAP job '{job_name}' did not complete within {max_retries * delay_seconds} seconds."
+    logger.critical(error_msg)
+    raise KubernetesJobTimeoutError(error_msg)
+
+def count_active_pods() -> int:
+    """
+    Counts the number of pods in 'Running' or 'Pending' state in the default namespace.
+
+    The namespace is defined by `settings.NAMESPACE`. This includes pods that are either
+    actively consuming or reserving resources, which should be considered when scheduling jobs.
+
+    Returns:
+        int: Number of active (running or pending) pods in the namespace.
+    """
+    try:
+        pods = core_v1_api.list_namespaced_pod(namespace=settings.NAMESPACE)
+        active_count = sum(
+            1 for pod in pods.items
+            if pod.status.phase in ("Running", "Pending")
+        )
+        return active_count
+    except Exception as e:
+        logger.error(f"Error counting active pods in namespace '{settings.NAMESPACE}': {e}")
+        return 0
