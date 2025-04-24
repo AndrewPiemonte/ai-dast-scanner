@@ -14,6 +14,8 @@ import remarkGfm from 'remark-gfm';
 import "./table.css";
 import PieChart, {PieChartProps} from "./Piechart";
 import HistogramChart, {HistogramProps} from "./Histogramchart";
+import { usePDF } from 'react-to-pdf';
+import generatePDF, { Margin } from 'react-to-pdf';
 
 interface ChartProps{
     pieChart: PieChartProps,
@@ -24,6 +26,9 @@ interface ChartProps{
 export default function SplitScreen ({params}:{
     params : Promise<{chatId: string}>;
 }) {
+    const { toPDF, targetRef } = usePDF({
+        filename: 'report.pdf'
+      });
     const router = useRouter()
     const dashboard = () => {
       router.push("/retrieve")
@@ -129,19 +134,24 @@ export default function SplitScreen ({params}:{
 
     return (
         <div className="flex h-screen">
+            <div className="absolute top-2 left-2 z-10 flex space-x-2">
+                <Button onClick={dashboard }> Back to Dashboard</Button>
+                <Button onClick={()=> toPDF() }> Download Report</Button>
+            </div>
             {/* Left Side - File Viewer */}
             <div className="w-1/2 h-full overflow-y-auto border-r p-4">
             <div className="px-5 text-lg">
             </div>
             
-            <div className="w-800px">
-            <Button onClick={dashboard } className="z-10 absolute top-0 left-0 m-2">Back to Dashboard</Button>
+            <div className="w-800px" ref={targetRef}>
+            
             <div className="my-10">
             <div  className="times">
                 <h1>Security Test Report</h1>
                 <PieChart {...risks} /> 
                 <br />
-                <HistogramChart data = {histdata.data}/>
+                <div className="avoid-page-break"></div>
+                <HistogramChart data = {histdata.data} />
 
                 <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                     {data}

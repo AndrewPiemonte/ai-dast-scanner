@@ -176,7 +176,7 @@ export function NewTestCard() {
     return (
         <Card className="w-[800px]">
             <CardHeader>
-                <CardTitle className="text-3xl"> Start a New Test with the DAST Tools </CardTitle>
+                <CardTitle className="text-3xl"> Start a New Scan</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="grid gap-4">
