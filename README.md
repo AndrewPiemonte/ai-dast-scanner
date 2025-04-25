@@ -31,6 +31,15 @@ The monthly estimate can be found below:
 
 [Cost Estimate](/docs/costEstimate.md)
 
+## Scan Reports
+Scan Reports are comprised of the following sections:
+1. Severity of Vulnerabilities: A pie chart showing the overall severity of vulnerabilities found.
+2. Vulnerability Count: A histogram showing the frequency of the detected vulnerabilities per type.
+3. AI Summary: Summary of the scan report.
+4. DAST Report: The original report.
+
+Take a look at our [Sample Reports](/docs/reports).
+
 ## User Guide
 Use the following guide to get familiar with launching a security test:
 
