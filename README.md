@@ -70,7 +70,10 @@ The user workflow of our platform depicted in figure 2 can be broken down into t
 5. A confirmation dialog appears, allowing the user to validate the target URL via a direct link. 
 6. The Loading Page then briefly appears as the test is initialized. 
 7. Once the test is successfully initiated, the Results Page confirms that initialization is complete. The user may return to the Dashboard Page to monitor test status (step 3). 
-8. When accessing a completed test, the user is directed to the Report + Chatbot Page, which presents the security scan results on the left panel and an interactive AI assistant on the right. The user can review the report and ask questions related to its findings. Once finished, they can return to the Dashboard Page. 
+8. When accessing a completed test, the user is directed to the Report + Chatbot Page, which presents the security scan results on the left panel and an interactive AI assistant on the right. The user can review the report and ask questions related to its findings. Once finished, they can return to the Dashboard Page.
 
+## Credits
+This platform was architected and developed by [Junsu An](https://github.com/junsu-a), [Andrew Piemonte](https://github.com/AndrewMachado1), [Ranbir Sharma](https://github.com/ranbir-sharma), and [Alfredo del Rayo](https://github.com/Alfredo-del-Rayo).
+Special thanks to the UBC Cloud Innovation Centre for their guidance and support, Scott McMillan for his valuable insights, and Capstone instructor Pieter Botman and TA Yize Zhao for supporting us throughout our final year in the Computer Engineering program.
 
 <img src="/docs/images/footer.png" style="width: 100%;"/>
