@@ -9,8 +9,8 @@
 ## AWS Authentication
 
 1. Run `aws configure sso`
-    - Our "SSO start URL": `https://ubc-cicsso.awsapps.com/start/#`
-    - Our "Region": `ca-central-1`
+    - Our "SSO start URL": <YOUR AWS SSO LOGIN URL>
+    - Our "Region": <YOUR AWS SSO LOGIN REGION>
 
 2. Login with `aws sso login`
     - Now your terminal session is authenticated with AWS.
