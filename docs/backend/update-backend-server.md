@@ -15,27 +15,68 @@
 2. Login with `aws sso login`
     - Now your terminal session is authenticated with AWS.
 
+## Environment Setup
+
+1. Set up required environment variables:
+```bash
+# Get AWS account ID
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+
+# Set AWS Region
+export AWS_REGION=<YOUR REGION>
+
+# Get ECR Repository
+export ECR_REPOSITORY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/aest/backend"
+
+# Get S3 Bucket Name
+export S3_BUCKET_NAME=$(aws s3api list-buckets --query 'Buckets[?contains(Name, `aestbucket`)].Name' --output text)
+
+# Get Service Account Role ARN
+export SERVICE_ACCOUNT_ROLE_ARN=$(aws iam list-roles --query 'Roles[?contains(RoleName, `EksStack-AestEksBackendServiceAccountRole`)].Arn' --output text)
+```
+
 ## Docker Build
 
 1. Go to the `src/backend` directory.
-2. Login to ECR: `aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 619071345478.dkr.ecr.us-west-2.amazonaws.com`
-3. Build the Docker image: `docker buildx build --platform linux/amd64 -t 619071345478.dkr.ecr.us-west-2.amazonaws.com/aest/backend:latest .`
-4. Push the Docker image: `docker push 619071345478.dkr.ecr.us-west-2.amazonaws.com/aest/backend:latest`
+2. Login to ECR:
+```bash
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY
+```
+
+3. Build the Docker image:
+```bash
+docker buildx build --platform linux/amd64 -t $ECR_REPOSITORY:latest .
+```
+
+4. Push the Docker image:
+```bash
+docker push $ECR_REPOSITORY:latest
+```
 
 ## Update backend server on EKS cluster
 
 > Our backend Helm chart will fetch the latest image from ECR.
 
-1. Get the EKS context: 
-    ```aws eks update-kubeconfig --name AestEks80BF057B-2506a807db2c4f2d92182a45a5548bef --region us-west-2```
+1. Get the EKS context:
+```bash
+aws eks update-kubeconfig --name <YOUR EKS ENDPOINT> --region $AWS_REGION
+```
 
 2. Make sure you are using the correct EKS context:
-    ```kubectl config get-contexts```
+```bash
+kubectl config get-contexts
+```
 
 3. Go to the Helm directory: `AI-Enahanced-Secutity-Testing-ECE-Capstone/helm`
 
-4. Upgrade the Helm chart: `helm upgrade backend-release ./helm/backend`
-    - Our Helm will always fetch the latest image from ECR.
+4. Upgrade the Helm chart with environment variables:
+```bash
+helm upgrade backend-release ./backend \
+  --set image.repository=$ECR_REPOSITORY \
+  --set s3.bucketName=$S3_BUCKET_NAME \
+  --set s3.region=$AWS_REGION \
+  --set serviceAccount.roleArn=$SERVICE_ACCOUNT_ROLE_ARN
+```
 
 ## Testing
 
@@ -43,8 +84,12 @@
 
 > You don't have to use 'kubectl' to interact with the Kubernetes. I'm using k9s.
 
-1. Get the external IP address for the backend service: `kubectl get svc backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'`
-2. (In my case) I simply curl the external IP address to test the backend server: 
-```
-curl -X POST "http://a6fce24b161c44922b8905516740476a-553792565.us-west-2.elb.amazonaws.com/zap/basescan?target_url=https://google.com"
-```
+1. Get the external IP address for the backend service: 
+    ```bash
+    kubectl get svc backend-release -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+    ```
+2. Test the backend server: 
+    ```bash
+    export BACKEND_URL=$(kubectl get svc backend-release -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    curl -X POST "http://$BACKEND_URL/zap/basescan?target_url=https://google.com"
+    ```

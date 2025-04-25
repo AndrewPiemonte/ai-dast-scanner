@@ -9,13 +9,13 @@
 > `pip install -r requirements.txt`
 
 - Make sure to bootstrap your CDK with your AWS account
-> `cdk bootstrap aws://<your AWS account ID>/us-west-2`
+> `cdk bootstrap aws://<your AWS account ID>/<YOUR REGION>`
 
 ## Notes
 - I had issue when using Python 3.12. I recommend Python 3.11
 
 ## Region
-US-WEST-2
+<YOUR REGION>
 
 ---
 

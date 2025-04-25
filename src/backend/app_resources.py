@@ -11,9 +11,11 @@ This includes:
 import sys
 import boto3
 import logging
+import os
 from kubernetes import config, client
 from kubernetes.config.config_exception import ConfigException
 
+region_name: str = os.getenv("AWS_REGION")
 
 # ------------------ Logging Configuration ------------------
 def setup_logging():
@@ -40,7 +42,7 @@ except ConfigException as e:
 
 # ------------------ Initialize AWS S3 Client ------------------
 try:
-    s3_client = boto3.client("s3", region_name="us-west-2")
+    s3_client = boto3.client("s3", region_name=region_name)
     logger.info("S3 client initialized successfully.")
 except Exception as e:
     logger.error(f"Failed to initialize S3 client: {e}")
@@ -50,8 +52,8 @@ except Exception as e:
 # ------------------ Initialize Bedrock clients ------------------
 
 try:
-    bedrock_client = boto3.client("bedrock", region_name="us-west-2")
-    bedrock_runtime_client = boto3.client("bedrock-runtime", region_name="us-west-2")
+    bedrock_client = boto3.client("bedrock", region_name=region_name)
+    bedrock_runtime_client = boto3.client("bedrock-runtime", region_name=region_name)
 except Exception as e:
     logger.error(f"Failed to initialize AWS Bedrock clients: {e}")
     sys.exit(1)  # Exit to allow Kubernetes to restart the pod on failure

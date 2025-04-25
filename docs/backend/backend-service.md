@@ -58,10 +58,32 @@ config.load_kube_config()
 
 to load your local ~/.kube/config.
 
-2. AWS Boto3
+2. Environment Variables
 
+The following environment variables need to be set:
+
+```bash
+# AWS Configuration
+export AWS_REGION=<YOUR REGION>  # Your AWS region
+export AWS_ROLE_ARN="arn:aws:iam::YOUR_ACCOUNT:role/YOUR_ROLE"
+export S3_BUCKET_NAME="your-bucket-name"
+
+# Kubernetes Configuration
+export K8S_NAMESPACE="default"
+export HELM_CHART_PATH="./zap-scan-job"
+export HELM_RELEASE_NAME="zap-scan-job"
+export K8S_SERVICE_ACCOUNT="backend-sa"
+
+# AI Model Configuration (optional)
+export BASE_MODEL_ID="meta.llama3-1-70b-instruct-v1:0"
+export MAX_INPUT_TOKENS="8192"
+export MAX_GENERATED_TOKENS="1500"
 ```
-s3_client = boto3.client("s3", region_name="us-west-2")
+
+3. AWS Boto3
+
+```python
+s3_client = boto3.client("s3", region_name=os.getenv("AWS_REGION"))
 ```
 
 If you intend to use AWS S3, ensure your credentials are configured properly in your environment.

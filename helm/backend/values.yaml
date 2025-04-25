@@ -1,9 +1,8 @@
-# TODO: Parameterize these values such as repository, bucketName, arn, etc.
 replicaCount: 1
 namespace: default  
 
 image:
-  repository: 619071345478.dkr.ecr.us-west-2.amazonaws.com/aest/backend
+  repository: ${ECR_REPOSITORY}
   tag: latest
   pullPolicy: Always
 
@@ -15,9 +14,10 @@ service:
 zapBaseUrl: "http://zap-service:8080"
 
 s3:
-  bucketName: "s3stack-aestbucket11161ed0-oyzazupebp7h"
+  bucketName: ${S3_BUCKET_NAME}
   accessKey: ""
+  region: ${AWS_REGION}
 
 serviceAccount:
   name: backend-sa
-  roleArn: "arn:aws:iam::619071345478:role/EksStack-AestEksBackendServiceAccountRoleBC23901D-EDMDGaHmKF1C"
+  roleArn: ${SERVICE_ACCOUNT_ROLE_ARN}

@@ -23,7 +23,7 @@ spec:
     volumeHandle: zap-reports-volume
     volumeAttributes:
       bucketName: {{ .Values.s3.bucketName }}
-      region: us-west-2
+      region: {{ .Values.s3.region }}
       mountOptions: "allow-delete"
     nodePublishSecretRef:
       name: s3-csi-secret

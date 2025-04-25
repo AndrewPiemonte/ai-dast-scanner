@@ -3,9 +3,7 @@ import os
 class Settings:
     """
     Configuration settings for the application, including ZAP, AWS, S3, and Kubernetes parameters.
-
-    This class centralizes configuration management, allowing environment variables
-    to override default values for better flexibility and scalability.
+    All sensitive or environment-specific values are configured through environment variables.
     """
 
     # -------------------- ZAP Configuration --------------------
@@ -13,33 +11,40 @@ class Settings:
     """Base URL for OWASP ZAP service, used to interact with the security scanner API."""
 
     # -------------------- AI Model Configuration --------------------
-    BASE_MODEL_ID = "meta.llama3-1-70b-instruct-v1:0"
+    BASE_MODEL_ID = os.getenv("BASE_MODEL_ID", "meta.llama3-1-70b-instruct-v1:0")
     """ID of the AI model used for analysis, defaulting to Meta Llama 3-70B."""
 
-    MAX_INPUT_TOKENS = 8192
+    MAX_INPUT_TOKENS = int(os.getenv("MAX_INPUT_TOKENS", "8192"))
     """Maximum number of tokens accepted as input for this model (prompt context window)."""
 
-    MAX_GENERATED_TOKENS = 1500
+    MAX_GENERATED_TOKENS = int(os.getenv("MAX_GENERATED_TOKENS", "1500"))
     """Maximum number of tokens allowed for the model to generate in a single response."""
 
-    TOKEN_BUFFER = 128  
+    TOKEN_BUFFER = int(os.getenv("TOKEN_BUFFER", "128"))
     """Safety margin to avoid hitting exact limit."""
 
-    LOCAL_TOKENIZER_MODEL_ID = "NousResearch/Llama-2-70b-chat-hf"
+    LOCAL_TOKENIZER_MODEL_ID = os.getenv(
+        "LOCAL_TOKENIZER_MODEL_ID", 
+        "NousResearch/Llama-2-70b-chat-hf"
+    )
     """Tokenizer model used locally to estimate token counts before sending prompts to Bedrock.
 
     We use a publicly available tokenizer (LLaMA 2 70B) because Meta's LLaMA 3 tokenizer requires gated access via Hugging Face.
     LLaMA 2's tokenizer provides a very close approximation of token count for LLaMA 3, making it suitable for validating input length.
     """
     # -------------------- S3 Storage Configuration --------------------
-    BUCKET_NAME = os.getenv("S3_BUCKET_NAME", "s3stack-aestbucket11161ed0-oyzazupebp7h")
+    BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+    if not BUCKET_NAME:
+        raise ValueError("S3_BUCKET_NAME environment variable must be set")
     """AWS S3 bucket name used for storing scan reports and other relevant data."""
 
     # -------------------- AWS Configuration --------------------
-    AWS_ROLE_ARN = os.getenv("AWS_ROLE_ARN", "EksStack-AestEksBackendServiceAccountRoleBC23901D-EDMDGaHmKF1C")
+    AWS_ROLE_ARN = os.getenv("AWS_ROLE_ARN")
+    if not AWS_ROLE_ARN:
+        raise ValueError("AWS_ROLE_ARN environment variable must be set")
     """IAM Role ARN used for assuming AWS permissions when accessing cloud resources."""
 
-    DEFAULT_AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
+    DEFAULT_AWS_REGION = os.getenv("AWS_REGION")
     """Default AWS region where cloud resources (e.g., S3, EKS) are deployed."""
 
     # -------------------- Kubernetes Configuration --------------------
@@ -75,7 +80,7 @@ class Settings:
 
 
     # -------------------- Configuration File Paths --------------------
-    SCAN_CONFIG_JSON_PATH = "config/scan_config.json"
+    SCAN_CONFIG_JSON_PATH = os.getenv("SCAN_CONFIG_JSON_PATH", "config/scan_config.json")
     """Path to the JSON configuration file defining scan settings and tool parameters."""
 
     OUTPUT_CONFIG_TEMPLATE = "security_tools/{tool}/config-{mode}.py"

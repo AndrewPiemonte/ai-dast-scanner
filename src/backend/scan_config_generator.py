@@ -208,7 +208,7 @@ def generate_values_yaml() -> None:
       image:
         repository: "owasp/zap"
         tag: "latest"
-      awsRegion: us-west-2
+      awsRegion: <DEFAULT REGION>
       s3Bucket: "my-s3-bucket"
       scanTimeout: 3600
     scan_settings:
