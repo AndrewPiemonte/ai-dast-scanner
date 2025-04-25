@@ -22,7 +22,9 @@ The deployment is broken down into two parts, the Amplify Application (Frontend 
 
 First deploy the Kubernetes backend using the following instructions:
 
-[backend deployment documentation](/docs/backend/aws-cdk-deployment.md)
+- [AWS Infrastructure Deployment Guide](/docs/backend/aws-cdk-deployment.md)
+- [FastAPI ZAP Base Scan Service](/docs/backend/aws-cdk-deployment.md)
+- [How to update backend server on EKS cluster](/docs/backend/backend-service.md)
 
 Then deploy the frontend:
 
