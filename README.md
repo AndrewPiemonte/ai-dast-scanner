@@ -1,79 +1,85 @@
-<h1 style="margin: 0px;"> AI Enhanced Security Testing Platform </h1>
-<h5 style="margin-bottom: 10px; margin-top: 0px; padding-left: 20px;"> By Andrew Piemonte, Alfredo A. del Rayo, Junsu An, and Ranbir Sharma in collaboration with the UBC CIC </h5>
+<p align="center">
+  <img src="./docs/images/logo.png" alt="Banner">
+</p>
+
+<p align="center">
+    <em>Run AI-enhanced security scans in the cloud with zero setup. Launch tests, analyze results, and get remediation advice in one interface. No local tools, no manual triage, fully automated and accessible from anywhere.
+    </em>
+</p>
+<p align="center">
+    <a href="./LICENSE">
+        <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License">
+    </a>
+    <a href="https://www.python.org/downloads/">
+        <img src="https://img.shields.io/badge/python-3.7%2B-blue.svg" alt="Python Version">
+    </a>
+</p>
+
+<p align="center">
+   <a href="./docs/README.md" target="_blank">
+   <img src="https://img.shields.io/badge/Documentation-Read-green?style=for-the-badge" alt="Documentation">
+   </a>
+<a href="https://youtu.be/69zGO0BYB2A" target="_blank">
+  <img src="https://img.shields.io/badge/Watch%20Demo-Video-blue?style=for-the-badge" alt="Watch Demo Video">
+</a>
+</p>
+
+## **What is AEST?**
+
+AEST is an AI-enhanced security testing platform for web applications. It automates vulnerability scanning using OWASP ZAP and layers on AI-driven analysis to generate clear, actionable security reports. Built on AWS infrastructure with containerized workflows and LLM integration, AEST streamlines the entire testing process from scan execution to result interpretation through a unified, scalable web interface.
+
+You can think of AEST as a modern interface for automated security testing workflows enhanced with LLM reasoning. It provides a secure frontend for launching tests, integrated chat-based reporting, and a modular backend architecture designed for cloud-native deployment.
+
+AEST is especially useful when:
+
+- You want to simplify black-box security testing without losing transparency
+- You need to generate human-readable vulnerability reports from raw scan data
+- Your team lacks deep security expertise but needs clear mitigation guidance
+- You are building developer-facing security workflows that need to scale
+- You want to combine OWASP ZAP with AI in a controlled and maintainable way
 
 
-This Capstone project is a collaborative effort by senior UBC Electrical and Computer Engineering undergraduate students, developed for the UBC Cloud Innovation Centre.
+## Use Cases
 
-The solution, DAEST: AI-Enhanced Security Testing, provides a user-friendly interface for launching security tests, a detailed summary report enhanced by artificial intelligence, and assistance. The report highlights security issues while providing practical tips for implementation, and the chatbot answers questions regarding the report. By streamlining the security testing process, this platform makes web application security more efficient and approachable for developers, regardless of their technical security expertise. 
+**Developers running pre-deployment scans**  
+Quickly test staging environments for OWASP vulnerabilities without setting up security tooling or writing scan scripts.
 
-Feel free to watch the [Demo video](https://youtu.be/69zGO0BYB2A) for an introduction to the platform.
+**Security engineers managing vulnerability workflows**  
+Automate recurring scans, receive AI-prioritized summaries, and maintain an organized archive of results for compliance tracking.
 
-## Cloud Architecture
-As seen in Figure 1, users interact with the web application hosted on AWS Amplify, which uses AWS Cognito for authentication. Once a user creates a new test, the server side of the Next.js Application contacts an Elastic Load Balancer (ELB) which redirects the request to a Kubernetes Pod hosted on an EC2 server (by the AWS EKS) which then triggers a Job to run an OWASP ZAP Base Scan, detecting vulnerabilities in the web application. The scan results are processed and stored in Amazon S3 as raw reports. These reports are then passed to AWS Bedrock, which analyzes the findings and generates clear report-suggested solutions. The final report is stored and displayed through the web interface. For the chatbot functionality, the client side of the Next.js API handler will forward the user prompt and report (as context) to the Fast API backend, which responds with the answer of the LLM. The system uses AWS EKS Cluster to manage containerized workflows and AWS Elastic Load Balancer to efficiently handle requests, ensuring scalability, reliability, and a seamless user experience. 
-<div align="center">
+**Startups without a dedicated security team**  
+Use the platform to scan, interpret, and fix vulnerabilities without needing deep security expertise or custom infrastructure.
 
-![Cloud Architecture Diagram](/docs/images/architectureDiagram.png)
 
-  Figure 1. High-Level Architecture Diagram
- </div>
+**Cloud engineers deploying secure apps**  
+Integrate security testing into AWS-based CI/CD pipelines and use Bedrock-powered analysis to flag critical issues before release.
 
-## Deployment Guide
-The deployment is broken down into two parts, the Amplify Application (Frontend + Amplify backend) and the Kubernetes Backend. 
 
-First deploy the Kubernetes backend using the following instructions:
+## **Core Capabilities**
 
-- [AWS Infrastructure Deployment Guide](/docs/backend/aws-cdk-deployment.md)
-- [FastAPI ZAP Base Scan Service](/docs/backend/aws-cdk-deployment.md)
-- [How to update backend server on EKS cluster](/docs/backend/backend-service.md)
+### Infrastructure
 
-Then deploy the frontend:
+- **Cloud-native:** Deploys with AWS EKS, Bedrock, S3, and Cognito for scalability and security  
+- **Code-defined:** Infrastructure and scan logic managed through IaC and containerization  
+- **Local control:** Keeps scan configuration, report storage, and access policies within your cloud  
+  
+<p align="center">
+  <img src="./docs/images/architectureDiagram.png" alt="Banner">
+</p>
 
-[frontend deployment documentation](/docs/frontend/frontend-deployment.md)
+### AI/ML Pipeline
 
-## Estimated Costs
-The monthly estimate can be found below:
+- **AI-enhanced:** Summarizes results with large language models for clarity and actionability  
+- **ML-ready pipeline:** Supports prompt tuning, output validation, and modular LLM integration for evolving AI workflows  
 
-[Cost Estimate](/docs/costEstimate.md)
+### Security & Testing
 
-## Scan Reports
-Scan Reports are comprised of the following sections:
-1. Severity of Vulnerabilities: A pie chart showing the overall severity of vulnerabilities found.
-2. Vulnerability Count: A histogram showing the frequency of the detected vulnerabilities per type.
-3. AI Summary: Summary of the scan report.
-4. DAST Report: The original report.
+- **Interactive UI:** Includes a web-based dashboard and integrated chatbot for report Q&A 
+- **Security-focused:** Automates black-box web scans using OWASP ZAP  
+- **Composable reports:** Combines raw scan data, OWASP guidance, and AI insight in one place  
 
-Take a look at our [Sample Reports](/docs/reports).
+ 
 
-## User Guide
-Use the following guide to get familiar with launching a security test:
 
-[User Guide](/docs/userGuide.md)
 
-[Demo Video](https://youtu.be/69zGO0BYB2A)
 
-## User Workflow
-<div align="center">
-
-![User Workflow of the Platform](/docs/images/userWorkflow.png)
-Figure 2. DAEST Platform User Workflow
-</div>
-
-The user workflow of our platform depicted in figure 2 can be broken down into the following steps:  
-
-1. An unauthenticated user begins at the Main Page, as shown in Figure 2, where they are prompted to log in.  
-2. On the Login Page, the user must enter valid credentials (username and password) to proceed. 
-3. The authenticated user is directed to the Dashboard Page (Figure 2), which displays all previously launched tests. From this page, the user may: 
-   - a. Click "Launch Test" to initiate a new scan (Step 4), or 
-   - b. Click on the name of a completed test to view its results (Step 8). 
-   - c. Click on “Sign Out” (go back to Step 1) 
-4. Selecting "Launch Test" navigates the user to the New Test Configuration Page, where they can input the test name, choose a DAST tool and scan mode, specify the target URL, and optionally modify advanced configuration settings. 
-5. A confirmation dialog appears, allowing the user to validate the target URL via a direct link. 
-6. The Loading Page then briefly appears as the test is initialized. 
-7. Once the test is successfully initiated, the Results Page confirms that initialization is complete. The user may return to the Dashboard Page to monitor test status (step 3). 
-8. When accessing a completed test, the user is directed to the Report + Chatbot Page, which presents the security scan results on the left panel and an interactive AI assistant on the right. The user can review the report and ask questions related to its findings. Once finished, they can return to the Dashboard Page.
-
-## Credits
-This platform was architected and developed by [Junsu An](https://github.com/junsu-a), [Andrew Piemonte](https://github.com/AndrewMachado1), [Ranbir Sharma](https://github.com/ranbir-sharma), and [Alfredo del Rayo](https://github.com/Alfredo-del-Rayo).
-Special thanks to the UBC Cloud Innovation Centre for their guidance and support, Scott McMillan for his valuable insights, and Capstone instructor Pieter Botman and TA Yize Zhao for supporting us throughout our final year in the Computer Engineering program.
-
-<img src="/docs/images/footer.png" style="width: 100%;"/>
