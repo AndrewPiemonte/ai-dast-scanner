@@ -30,7 +30,7 @@ AEST is an AI-enhanced security testing platform for web applications. It automa
 
 You can think of AEST as a modern interface for automated security testing workflows enhanced with LLM reasoning. It provides a secure frontend for launching tests, integrated chat-based reporting, and a modular backend architecture designed for cloud-native deployment.
 
-AEST is especially useful when:
+DAEST is especially useful when:
 
 - You want to simplify black-box security testing without losing transparency
 - You need to generate human-readable vulnerability reports from raw scan data
