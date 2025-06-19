@@ -24,9 +24,9 @@
 </a>
 </p>
 
-## **What is AEST?**
+## **What is DAEST?**
 
-AEST is an AI-enhanced security testing platform for web applications. It automates vulnerability scanning using OWASP ZAP and layers on AI-driven analysis to generate clear, actionable security reports. Built on AWS infrastructure with containerized workflows and LLM integration, AEST streamlines the entire testing process from scan execution to result interpretation through a unified, scalable web interface.
+DAEST is an AI-enhanced security testing platform for web applications. It automates vulnerability scanning using OWASP ZAP and layers on AI-driven analysis to generate clear, actionable security reports. Built on AWS infrastructure with containerized workflows and LLM integration, AEST streamlines the entire testing process from scan execution to result interpretation through a unified, scalable web interface.
 
 You can think of AEST as a modern interface for automated security testing workflows enhanced with LLM reasoning. It provides a secure frontend for launching tests, integrated chat-based reporting, and a modular backend architecture designed for cloud-native deployment.
 
