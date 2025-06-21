@@ -6,6 +6,12 @@
     <em>Run AI-enhanced security scans in the cloud with zero setup. Launch tests, analyze results, and get remediation advice in one interface. No local tools, no manual triage, fully automated and accessible from anywhere.
     </em>
 </p>
+
+<p align="center">
+    <em> This project was developed through a collaboration between the UBC Cloud Innovation Centre (CIC) and Amazon Web Services (AWS)
+    </em>
+</p>
+
 <p align="center">
     <a href="./LICENSE">
         <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License">
@@ -13,6 +19,14 @@
     <a href="https://www.python.org/downloads/">
         <img src="https://img.shields.io/badge/python-3.7%2B-blue.svg" alt="Python Version">
     </a>
+    <a href="https://aws.amazon.com"    target="_blank">
+      <img src="https://img.shields.io/badge/AWS-Cloud%20Infrastructure-F0910A?logo=amazon-aws&logoColor=white" alt="AWS Badge">
+    </a>
+</p>
+<p align="center">
+  <a href="https://cic.ubc.ca" target="_blank">
+    <img src="https://img.shields.io/badge/UBC%20CIC-Powered%20by%20AWS-blue?logo=ubisoft&logoColor=white" alt="UBC CIC Badge">
+  </a>
 </p>
 
 <p align="center">
@@ -23,6 +37,9 @@
   <img src="https://img.shields.io/badge/Watch%20Demo-Video-blue?style=for-the-badge" alt="Watch Demo Video">
 </a>
 </p>
+
+
+
 
 ## **What is DAEST?**
 
